@@ -4,6 +4,10 @@ inputs:
   job:
     required: true
     default: auto-cc
+  maintainers:
+    required: true
+  owner:
+    required: true
   timeout:
     required: false
     default: 60  # minutes

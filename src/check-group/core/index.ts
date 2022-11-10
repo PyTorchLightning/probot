@@ -60,7 +60,12 @@ export class CheckGroup {
     this.timeoutTimer = setTimeout(
       () => {
         clearTimeout(this.intervalTimer)
-        core.setFailed(`The timeout of ${timeout} minutes has triggered.`)
+        core.setFailed(
+          `The timeout of ${timeout} minutes has triggered but not all required jobs were passing.`
+          + ` This job will need to be re-run to merge your PR.`
+          + ` If you do not have write access to the repository you can ask ${core.getInput('maintainers')} to re-run it for you.`
+          + ` If you have any other questions, you can reach out to ${core.getInput('owner')} for help.`
+        )
       }, timeout * 60 * 1000 
     )
   }

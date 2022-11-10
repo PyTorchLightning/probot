@@ -105,7 +105,10 @@ var CheckGroup = /** @class */ (function () {
                         // set a timeout that will stop the job to avoid polling the GitHub API infinitely
                         this.timeoutTimer = setTimeout(function () {
                             clearTimeout(_this.intervalTimer);
-                            core.setFailed("The timeout of ".concat(timeout, " minutes has triggered."));
+                            core.setFailed("The timeout of ".concat(timeout, " minutes has triggered but not all required jobs were passing.")
+                                + " This job will need to be re-run to merge your PR."
+                                + " If you do not have write access to the repository you can ask ".concat(core.getInput('maintainers'), " to re-run it for you.")
+                                + " If you have any other questions, you can reach out to ".concat(core.getInput('owner'), " for help."));
                         }, timeout * 60 * 1000);
                         return [2 /*return*/];
                 }
