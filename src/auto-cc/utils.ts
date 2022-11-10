@@ -80,7 +80,6 @@ export function parseSubscriptions(rawSubsText): object {
   if (subsRows == null) {
     return subscriptions;
   }
-  // eslint-disable-next-line github/array-foreach
   subsRows.forEach((row: string) => {
     const labelMatch = row.match(/^\* +([^@]+)/);
     if (labelMatch) {

@@ -63,10 +63,8 @@ function myBot(app) {
                         labels = context.payload[name]['labels'].map(function (e) { return e['name']; });
                         context.log({ labels: labels });
                         cc = new Set();
-                        // eslint-disable-next-line github/array-foreach
                         labels.forEach(function (l) {
                             if (l in subscriptions) {
-                                // eslint-disable-next-line github/array-foreach
                                 subscriptions[l].forEach(function (u) { return cc.add(u); });
                             }
                         });
@@ -89,7 +87,6 @@ function myBot(app) {
                         }
                         if (!(prevCC.size !== cc.size)) return [3 /*break*/, 6];
                         newCCString_1 = 'cc';
-                        // eslint-disable-next-line github/array-foreach
                         cc.forEach(function (u) {
                             newCCString_1 += " @".concat(u);
                         });

@@ -30,11 +30,11 @@ var auto_cc_bot_1 = __importDefault(require("./auto-cc/auto-cc-bot"));
 var index_1 = __importDefault(require("./check-group/index"));
 var core = __importStar(require("@actions/core"));
 function botSteps(app) {
-    var job = core.getInput('job');
-    if (job === 'auto-cc') {
+    var job = core.getInput("job");
+    if (job === "auto-cc") {
         (0, auto_cc_bot_1.default)(app);
     }
-    else if (job === 'check-group') {
+    else if (job === "check-group") {
         (0, index_1.default)(app);
     }
     else {

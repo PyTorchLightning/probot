@@ -4,9 +4,12 @@ inputs:
   job:
     required: true
     default: auto-cc
+  timeout:
+    required: false
+    default: 60  # minutes
   interval:
     required: false
-    default: 120
+    default: 120  # seconds
 runs:
   using: 'node16'
   main: 'dist/action.js'

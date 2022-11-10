@@ -25,10 +25,8 @@ function myBot(app: Probot): void {
     const labels = context.payload[name]['labels'].map(e => e['name']);
     context.log({labels});
     const cc = new Set();
-    // eslint-disable-next-line github/array-foreach
     labels.forEach(l => {
       if (l in subscriptions) {
-        // eslint-disable-next-line github/array-foreach
         subscriptions[l].forEach(u => cc.add(u));
       }
     });
@@ -52,7 +50,6 @@ function myBot(app: Probot): void {
       // Invariant: prevCC is a subset of cc
       if (prevCC.size !== cc.size) {
         let newCCString = 'cc';
-        // eslint-disable-next-line github/array-foreach
         cc.forEach(u => {
           newCCString += ` @${u}`;
         });

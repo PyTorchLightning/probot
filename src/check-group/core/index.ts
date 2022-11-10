@@ -23,6 +23,9 @@ export class CheckGroup {
   context: Context;
   sha: string;
 
+  intervalTimer: ReturnType<typeof setTimeout> = setTimeout(() => '', 0);
+  timeoutTimer: ReturnType<typeof setTimeout> = setTimeout(() => '', 0);
+
   constructor(
     pullRequestNumber: number,
     config: CheckGroupConfig,
@@ -49,38 +52,49 @@ export class CheckGroup {
 
     const interval = parseInt(core.getInput('interval'))
     core.info(`Check interval: ${interval}`);
-    
-    let tries = 0;
-    let conclusion = undefined;
-    // IMPORTANT: a timeout should be set in the action workflow
-    const loop = setInterval(
-      async function(that) {
-        try {
-          tries += 1;
-          core.startGroup(`Check ${tries}`);
+    this.runCheck(subprojs, 1, interval * 1000)
 
-          const postedChecks = await getPostedChecks(that.context, that.sha);
-          core.debug(`postedChecks: ${JSON.stringify(postedChecks)}`);
-
-          conclusion = satisfyExpectedChecks(subprojs, postedChecks);
-          const summary = generateProgressSummary(subprojs, postedChecks)
-          const details = generateProgressDetails(subprojs, postedChecks)
-          core.info(
-            `${that.config.customServiceName} conclusion: '${conclusion}':\n${summary}\n${details}`
-          )
-          core.endGroup();
-          
-          if (conclusion === "all_passing") {
-            core.info("Required checks were successful!")
-            clearInterval(loop)
-          }
-        } catch (error) {
-          core.setFailed(error);
-          clearInterval(loop)
-        }
-      }, interval * 1000, this
+    const timeout = parseInt(core.getInput('timeout'))
+    core.info(`Timeout: ${timeout}`);
+    // set a timeout that will stop the job to avoid polling the GitHub API infinitely
+    this.timeoutTimer = setTimeout(
+      () => {
+        clearTimeout(this.intervalTimer)
+        core.setFailed(`The timeout of ${timeout} minutes has triggered.`)
+      }, timeout * 60 * 1000 
     )
   }
+
+  async runCheck(subprojs, tries: number, interval: number) {
+    try {
+      // print in a group to reduce verbosity
+      core.startGroup(`Check ${tries}`);
+      const postedChecks = await getPostedChecks(this.context, this.sha);
+      core.debug(`postedChecks: ${JSON.stringify(postedChecks)}`);
+      
+      const conclusion = satisfyExpectedChecks(subprojs, postedChecks);
+      const summary = generateProgressSummary(subprojs, postedChecks)
+      const details = generateProgressDetails(subprojs, postedChecks)
+      core.info(
+        `${this.config.customServiceName} conclusion: '${conclusion}':\n${summary}\n${details}`
+      )
+      core.endGroup();
+    
+      if (conclusion === "all_passing") {
+        core.info("All required checks were successful!")
+        clearTimeout(this.intervalTimer)
+        clearTimeout(this.timeoutTimer)
+      } else {
+        this.intervalTimer = setTimeout(() => this.runCheck(subprojs, tries + 1, interval), interval);
+      }
+      
+    } catch (error) {
+      // bubble up the error to the job
+      core.setFailed(error);
+      clearTimeout(this.intervalTimer)
+      clearTimeout(this.timeoutTimer)
+    }
+  } 
 
   /**
    * Gets a list of files that are modified in

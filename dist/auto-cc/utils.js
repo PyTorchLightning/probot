@@ -168,7 +168,6 @@ function parseSubscriptions(rawSubsText) {
     if (subsRows == null) {
         return subscriptions;
     }
-    // eslint-disable-next-line github/array-foreach
     subsRows.forEach(function (row) {
         var labelMatch = row.match(/^\* +([^@]+)/);
         if (labelMatch) {

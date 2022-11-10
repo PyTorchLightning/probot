@@ -74,6 +74,8 @@ var utils_3 = require("../utils");
  */
 var CheckGroup = /** @class */ (function () {
     function CheckGroup(pullRequestNumber, config, context, sha) {
+        this.intervalTimer = setTimeout(function () { return ''; }, 0);
+        this.timeoutTimer = setTimeout(function () { return ''; }, 0);
         this.pullRequestNumber = pullRequestNumber;
         this.config = config;
         this.context = context;
@@ -81,7 +83,8 @@ var CheckGroup = /** @class */ (function () {
     }
     CheckGroup.prototype.run = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var filenames, subprojs, expectedChecks, interval, tries, conclusion, loop;
+            var filenames, subprojs, expectedChecks, interval, timeout;
+            var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4 /*yield*/, this.files()];
@@ -96,42 +99,55 @@ var CheckGroup = /** @class */ (function () {
                         }
                         interval = parseInt(core.getInput('interval'));
                         core.info("Check interval: ".concat(interval));
-                        tries = 0;
-                        conclusion = undefined;
-                        loop = setInterval(function (that) {
-                            return __awaiter(this, void 0, void 0, function () {
-                                var postedChecks, summary, details, error_1;
-                                return __generator(this, function (_a) {
-                                    switch (_a.label) {
-                                        case 0:
-                                            _a.trys.push([0, 2, , 3]);
-                                            tries += 1;
-                                            core.startGroup("Check ".concat(tries));
-                                            return [4 /*yield*/, getPostedChecks(that.context, that.sha)];
-                                        case 1:
-                                            postedChecks = _a.sent();
-                                            core.debug("postedChecks: ".concat(JSON.stringify(postedChecks)));
-                                            conclusion = (0, utils_3.satisfyExpectedChecks)(subprojs, postedChecks);
-                                            summary = (0, utils_1.generateProgressSummary)(subprojs, postedChecks);
-                                            details = (0, utils_1.generateProgressDetails)(subprojs, postedChecks);
-                                            core.info("".concat(that.config.customServiceName, " conclusion: '").concat(conclusion, "':\n").concat(summary, "\n").concat(details));
-                                            core.endGroup();
-                                            if (conclusion === "all_passing") {
-                                                core.info("Required checks were successful!");
-                                                clearInterval(loop);
-                                            }
-                                            return [3 /*break*/, 3];
-                                        case 2:
-                                            error_1 = _a.sent();
-                                            core.setFailed(error_1);
-                                            clearInterval(loop);
-                                            return [3 /*break*/, 3];
-                                        case 3: return [2 /*return*/];
-                                    }
-                                });
-                            });
-                        }, interval * 1000, this);
+                        this.runCheck(subprojs, 1, interval * 1000);
+                        timeout = parseInt(core.getInput('timeout'));
+                        core.info("Timeout: ".concat(timeout));
+                        // set a timeout that will stop the job to avoid polling the GitHub API infinitely
+                        this.timeoutTimer = setTimeout(function () {
+                            clearTimeout(_this.intervalTimer);
+                            core.setFailed("The timeout of ".concat(timeout, " minutes has triggered."));
+                        }, timeout * 60 * 1000);
                         return [2 /*return*/];
+                }
+            });
+        });
+    };
+    CheckGroup.prototype.runCheck = function (subprojs, tries, interval) {
+        return __awaiter(this, void 0, void 0, function () {
+            var postedChecks, conclusion, summary, details, error_1;
+            var _this = this;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        // print in a group to reduce verbosity
+                        core.startGroup("Check ".concat(tries));
+                        return [4 /*yield*/, getPostedChecks(this.context, this.sha)];
+                    case 1:
+                        postedChecks = _a.sent();
+                        core.debug("postedChecks: ".concat(JSON.stringify(postedChecks)));
+                        conclusion = (0, utils_3.satisfyExpectedChecks)(subprojs, postedChecks);
+                        summary = (0, utils_1.generateProgressSummary)(subprojs, postedChecks);
+                        details = (0, utils_1.generateProgressDetails)(subprojs, postedChecks);
+                        core.info("".concat(this.config.customServiceName, " conclusion: '").concat(conclusion, "':\n").concat(summary, "\n").concat(details));
+                        core.endGroup();
+                        if (conclusion === "all_passing") {
+                            core.info("All required checks were successful!");
+                            clearTimeout(this.intervalTimer);
+                            clearTimeout(this.timeoutTimer);
+                        }
+                        else {
+                            this.intervalTimer = setTimeout(function () { return _this.runCheck(subprojs, tries + 1, interval); }, interval);
+                        }
+                        return [3 /*break*/, 3];
+                    case 2:
+                        error_1 = _a.sent();
+                        // bubble up the error to the job
+                        core.setFailed(error_1);
+                        clearTimeout(this.intervalTimer);
+                        clearTimeout(this.timeoutTimer);
+                        return [3 /*break*/, 3];
+                    case 3: return [2 /*return*/];
                 }
             });
         });

@@ -1,7 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { CheckGroupConfig, ProgressReport, SubProjConfig } from "../types";
-/* eslint-enable @typescript-eslint/no-unused-vars */
-import { defaultCheckId } from "../config";
+import { ProgressReport, SubProjConfig } from "../types";
 
 export const generateProgressReport = (
   subprojects: SubProjConfig[],
