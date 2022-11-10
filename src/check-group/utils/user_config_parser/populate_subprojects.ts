@@ -71,6 +71,10 @@ export function parseProjectChecks(subprojData: Record<string, unknown>): SubPro
   type RecursiveArray = Array<RecursiveArray | string>;
   const checksData: RecursiveArray = subprojData["checks"] as RecursiveArray;
   const flattened: string[] = checksData.flat(100) as string[]  // 100 levels deep
+  core.debug(
+    `checksData for '${subprojData["id"]}' before flatten: ${JSON.stringify(checksData)})`
+    + ` and after flatten: ${JSON.stringify(flattened)}`
+  );
   flattened.forEach((checkId) => projChecks.push({id: checkId}))
   if (projChecks.length == 0) {
     core.setFailed(`The list of checks for the '${subprojData["id"]}' group is empty`);

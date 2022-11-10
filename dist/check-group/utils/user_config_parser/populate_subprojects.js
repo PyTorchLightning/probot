@@ -82,6 +82,8 @@ function parseProjectChecks(subprojData) {
     var projChecks = [];
     var checksData = subprojData["checks"];
     var flattened = checksData.flat(100); // 100 levels deep
+    core.debug("checksData for '".concat(subprojData["id"], "' before flatten: ").concat(JSON.stringify(checksData), ")")
+        + " and after flatten: ".concat(JSON.stringify(flattened)));
     flattened.forEach(function (checkId) { return projChecks.push({ id: checkId }); });
     if (projChecks.length == 0) {
         core.setFailed("The list of checks for the '".concat(subprojData["id"], "' group is empty"));
