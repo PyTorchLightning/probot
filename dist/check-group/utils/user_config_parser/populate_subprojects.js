@@ -2,8 +2,32 @@
 /**
  * @module PopulateSubProjects
  */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.populateSubprojects = exports.parseProjectChecks = exports.parseProjectPaths = exports.parseProjectId = void 0;
+var core = __importStar(require("@actions/core"));
 /**
  * Parses the structured ID into sub-project data from the raw user config.
  *
@@ -51,32 +75,18 @@ function parseProjectPaths(subprojData, subprojConfig, config) {
     }
 }
 exports.parseProjectPaths = parseProjectPaths;
-function parseProjectChecks(subprojData, subprojConfig, config) {
-    if ("checks" in subprojData && subprojData["checks"] !== null) {
-        var projChecks_1 = [];
-        var checksData = subprojData["checks"];
-        checksData.forEach(function (checkId) {
-            projChecks_1.push({
-                id: checkId,
-            });
-        });
-        var minPathCnt = 0;
-        if (projChecks_1.length > minPathCnt) {
-            subprojConfig.checks = projChecks_1;
-        }
-        else {
-            config.debugInfo.push({
-                configError: true,
-                configErrorMsg: "Checks is empty.",
-            });
-        }
+function parseProjectChecks(subprojData) {
+    if (!("checks" in subprojData) || subprojData["checks"] == null) {
+        core.setFailed("The list of checks for the '".concat(subprojData["id"], "' group is not defined"));
     }
-    else {
-        config.debugInfo.push({
-            configError: true,
-            configErrorMsg: ":warning: Essential fields missing from config for project ".concat(subprojConfig.id, ": checks"),
-        });
+    var projChecks = [];
+    var checksData = subprojData["checks"];
+    var flattened = checksData.flat(100); // 100 levels deep
+    flattened.forEach(function (checkId) { return projChecks.push({ id: checkId }); });
+    if (projChecks.length == 0) {
+        core.setFailed("The list of checks for the '".concat(subprojData["id"], "' group is empty"));
     }
+    return projChecks;
 }
 exports.parseProjectChecks = parseProjectChecks;
 /**
@@ -96,7 +106,7 @@ function populateSubprojects(configData, config) {
             try {
                 parseProjectId(subprojData, subprojConfig);
                 parseProjectPaths(subprojData, subprojConfig, config);
-                parseProjectChecks(subprojData, subprojConfig, config);
+                subprojConfig.checks = parseProjectChecks(subprojData);
                 config.subProjects.push(subprojConfig);
             }
             catch (err) {

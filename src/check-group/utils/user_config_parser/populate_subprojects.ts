@@ -8,6 +8,7 @@ import {
   SubProjConfig,
   SubProjPath,
 } from "../../types";
+import * as core from '@actions/core'
 
 /**
  * Parses the structured ID into sub-project data from the raw user config.
@@ -60,34 +61,21 @@ export function parseProjectPaths(
   }
 }
 
-export function parseProjectChecks(
-  subprojData: Record<string, unknown>,
-  subprojConfig: SubProjConfig,
-  config: CheckGroupConfig,
-): void {
-  if ("checks" in subprojData && subprojData["checks"] !== null) {
-    const projChecks: SubProjCheck[] = [];
-    const checksData: string[] = subprojData["checks"] as string[];
-    checksData.forEach((checkId) => {
-      projChecks.push({
-        id: checkId,
-      });
-    });
-    const minPathCnt = 0;
-    if (projChecks.length > minPathCnt) {
-      subprojConfig.checks = projChecks;
-    } else {
-      config.debugInfo.push({
-        configError: true,
-        configErrorMsg: "Checks is empty.",
-      });
-    }
-  } else {
-    config.debugInfo.push({
-      configError: true,
-      configErrorMsg: `:warning: Essential fields missing from config for project ${subprojConfig.id}: checks`,
-    });
+export function parseProjectChecks(subprojData: Record<string, unknown>): SubProjCheck[] {
+  if (!("checks" in subprojData) || subprojData["checks"] == null) {
+    core.setFailed(`The list of checks for the '${subprojData["id"]}' group is not defined`);
   }
+  const projChecks: SubProjCheck[] = [];
+  // workaround for https://stackoverflow.com/questions/24090177/how-to-merge-yaml-arrays
+  // by manually flattening multidimensional arrays
+  type RecursiveArray = Array<RecursiveArray | string>;
+  const checksData: RecursiveArray = subprojData["checks"] as RecursiveArray;
+  const flattened: string[] = checksData.flat(100) as string[]  // 100 levels deep
+  flattened.forEach((checkId) => projChecks.push({id: checkId}))
+  if (projChecks.length == 0) {
+    core.setFailed(`The list of checks for the '${subprojData["id"]}' group is empty`);
+  }
+  return projChecks;
 }
 
 /**
@@ -113,7 +101,7 @@ export function populateSubprojects(
       try {
         parseProjectId(subprojData, subprojConfig);
         parseProjectPaths(subprojData, subprojConfig, config);
-        parseProjectChecks(subprojData, subprojConfig, config);
+        subprojConfig.checks = parseProjectChecks(subprojData);
         config.subProjects.push(subprojConfig);
       } catch (err) {
         config.debugInfo.push({
