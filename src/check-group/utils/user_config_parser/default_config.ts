@@ -10,7 +10,6 @@ import { CheckGroupConfig } from "../../types";
 export const getDefaultConfig = (): CheckGroupConfig => {
   return {
     customServiceName: "",
-    debugInfo: [],
     subProjects: [],
   };
 };

@@ -10,7 +10,6 @@ exports.getDefaultConfig = void 0;
 var getDefaultConfig = function () {
     return {
         customServiceName: "",
-        debugInfo: [],
         subProjects: [],
     };
 };

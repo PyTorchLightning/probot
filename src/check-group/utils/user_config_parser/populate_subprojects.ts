@@ -36,28 +36,18 @@ export function parseProjectPaths(
   subprojConfig: SubProjConfig,
   config: CheckGroupConfig,
 ): void {
-  if ("paths" in subprojData && subprojData["paths"] !== null) {
-    const projPaths: SubProjPath[] = [];
-    const locations: string[] = subprojData["paths"] as string[];
-    locations.forEach((loc) => {
-      projPaths.push({
-        location: loc,
-      });
+  if (!("paths" in subprojData) || subprojData["paths"] == null) {
+    core.setFailed(`The list of paths for the '${subprojData["id"]}' group is not defined`);
+  }
+  const projPaths: SubProjPath[] = [];
+  const locations: string[] = subprojData["paths"] as string[];
+  locations.forEach((loc) => {
+    projPaths.push({
+      location: loc,
     });
-    const minPathCnt = 0;
-    if (projPaths.length > minPathCnt) {
-      subprojConfig.paths = projPaths;
-    } else {
-      config.debugInfo.push({
-        configError: true,
-        configErrorMsg: "Paths is empty.",
-      });
-    }
-  } else {
-    config.debugInfo.push({
-      configError: true,
-      configErrorMsg: `:warning: Essential fields missing from config for project ${subprojConfig.id}: paths`,
-    });
+  });
+  if (projPaths.length == 0) {
+    core.setFailed(`The list of paths for the '${subprojData["id"]}' group is empty`);
   }
 }
 
@@ -107,13 +97,8 @@ export function populateSubprojects(
         parseProjectPaths(subprojData, subprojConfig, config);
         subprojConfig.checks = parseProjectChecks(subprojData);
         config.subProjects.push(subprojConfig);
-      } catch (err) {
-        config.debugInfo.push({
-          configError: true,
-          configErrorMsg: `Error adding sub-project from data:\n ${JSON.stringify(
-            subprojData,
-          )}`,
-        });
+      } catch (error) {
+        core.setFailed(error);
       }
     });
   } else {

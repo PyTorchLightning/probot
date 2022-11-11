@@ -9,6 +9,7 @@ import { CheckGroupConfig } from "../../types";
 import { getDefaultConfig } from "./default_config";
 import { populateCustomServiceName } from "./populate_custom_service_name";
 import { populateSubprojects } from "./populate_subprojects";
+import * as core from '@actions/core'
 
 /**
  * Parses the typed configuration from the raw
@@ -27,7 +28,7 @@ export const parseUserConfig = (
     populateSubprojects(configData, config);
     populateCustomServiceName(configData, config);
     return config;
-  } catch {
-    return defaultConfig;
+  } catch (error) {
+    core.setFailed(error);
   }
 };

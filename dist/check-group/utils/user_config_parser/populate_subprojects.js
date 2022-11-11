@@ -48,30 +48,18 @@ function parseProjectId(subprojData, subprojConfig) {
 }
 exports.parseProjectId = parseProjectId;
 function parseProjectPaths(subprojData, subprojConfig, config) {
-    if ("paths" in subprojData && subprojData["paths"] !== null) {
-        var projPaths_1 = [];
-        var locations = subprojData["paths"];
-        locations.forEach(function (loc) {
-            projPaths_1.push({
-                location: loc,
-            });
-        });
-        var minPathCnt = 0;
-        if (projPaths_1.length > minPathCnt) {
-            subprojConfig.paths = projPaths_1;
-        }
-        else {
-            config.debugInfo.push({
-                configError: true,
-                configErrorMsg: "Paths is empty.",
-            });
-        }
+    if (!("paths" in subprojData) || subprojData["paths"] == null) {
+        core.setFailed("The list of paths for the '".concat(subprojData["id"], "' group is not defined"));
     }
-    else {
-        config.debugInfo.push({
-            configError: true,
-            configErrorMsg: ":warning: Essential fields missing from config for project ".concat(subprojConfig.id, ": paths"),
+    var projPaths = [];
+    var locations = subprojData["paths"];
+    locations.forEach(function (loc) {
+        projPaths.push({
+            location: loc,
         });
+    });
+    if (projPaths.length == 0) {
+        core.setFailed("The list of paths for the '".concat(subprojData["id"], "' group is empty"));
     }
 }
 exports.parseProjectPaths = parseProjectPaths;
@@ -111,11 +99,8 @@ function populateSubprojects(configData, config) {
                 subprojConfig.checks = parseProjectChecks(subprojData);
                 config.subProjects.push(subprojConfig);
             }
-            catch (err) {
-                config.debugInfo.push({
-                    configError: true,
-                    configErrorMsg: "Error adding sub-project from data:\n ".concat(JSON.stringify(subprojData)),
-                });
+            catch (error) {
+                core.setFailed(error);
             }
         });
     }
