@@ -10,32 +10,14 @@ import {
 } from "../../types";
 import * as core from '@actions/core'
 
-/**
- * Parses the structured ID into sub-project data from the raw user config.
- *
- * The ID is required for the sub-project since it is hard to give the user
- * any useful information for debugging if the ID that is used to identify the
- * location of the issue is missing. In this case, it will be better to bail.
- *
- * @param subprojData The raw data from the config file.
- * @param subprojConfig The structured data for the sub-project.
- */
-export function parseProjectId(
-  subprojData: Record<string, unknown>,
-  subprojConfig: SubProjConfig,
-): void {
-  if ("id" in subprojData) {
-    subprojConfig.id = subprojData["id"] as string;
-  } else {
-    throw Error("Essential field missing from config: sub-project ID");
+export function parseProjectId(subprojData: Record<string, unknown>): string {
+  if (!("id" in subprojData)) {
+    core.setFailed("Essential field missing from config: sub-project ID");
   }
+  return subprojData["id"] as string;
 }
 
-export function parseProjectPaths(
-  subprojData: Record<string, unknown>,
-  subprojConfig: SubProjConfig,
-  config: CheckGroupConfig,
-): void {
+export function parseProjectPaths(subprojData: Record<string, unknown>): SubProjPath[] {
   if (!("paths" in subprojData) || subprojData["paths"] == null) {
     core.setFailed(`The list of paths for the '${subprojData["id"]}' group is not defined`);
   }
@@ -49,6 +31,7 @@ export function parseProjectPaths(
   if (projPaths.length == 0) {
     core.setFailed(`The list of paths for the '${subprojData["id"]}' group is empty`);
   }
+  return projPaths;
 }
 
 export function parseProjectChecks(subprojData: Record<string, unknown>): SubProjCheck[] {
@@ -81,27 +64,16 @@ export function populateSubprojects(
   configData: Record<string, unknown>,
   config: CheckGroupConfig,
 ): void {
-  if ("subprojects" in configData) {
-    const subProjectsData = configData["subprojects"] as Record<
-      string,
-      unknown
-    >[];
-    subProjectsData.forEach((subprojData) => {
-      const subprojConfig: SubProjConfig = {
-        checks: [],
-        id: "Unknown",
-        paths: [],
-      };
-      try {
-        parseProjectId(subprojData, subprojConfig);
-        parseProjectPaths(subprojData, subprojConfig, config);
-        subprojConfig.checks = parseProjectChecks(subprojData);
-        config.subProjects.push(subprojConfig);
-      } catch (error) {
-        core.setFailed(error);
-      }
-    });
-  } else {
-    throw Error("subprojects not found in the user configuration file");
+  if (!("subprojects" in configData)) {
+    core.setFailed("configData has no subprojects");
   }
+  const subProjectsData = configData["subprojects"] as Record<string, unknown>[];
+  subProjectsData.forEach((subprojData) => {
+    const subprojConfig: SubProjConfig = {
+      checks: parseProjectChecks(subprojData),
+      id: parseProjectId(subprojData),
+      paths: parseProjectPaths(subprojData),
+    };
+    config.subProjects.push(subprojConfig);
+  });
 }
