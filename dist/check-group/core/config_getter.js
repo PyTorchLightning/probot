@@ -80,19 +80,20 @@ var core = __importStar(require("@actions/core"));
  * @returns The configuration or default configuration if non exists.
  */
 var fetchConfig = function (context) { return __awaiter(void 0, void 0, void 0, function () {
-    var configData, filename, params, repoFullName, githubRepository, prBranch, config;
+    var configData, filename, payload, repoFullName, githubRepository, prBranch, params, config;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 configData = undefined;
                 filename = "checkgroup.yml";
-                params = context.repo({ path: ".github/".concat(filename) });
-                repoFullName = "".concat(params.owner, "/").concat(params.repo);
-                githubRepository = process.env['GITHUB_REPOSITORY'];
+                payload = context.payload;
+                repoFullName = payload.pull_request.head.repo.full_name;
+                githubRepository = payload.pull_request.base.repo.full_name;
                 core.debug("fetchConfig ".concat(repoFullName, " ").concat(githubRepository));
                 if (!(repoFullName == githubRepository)) return [3 /*break*/, 2];
-                prBranch = process.env['GITHUB_HEAD_REF'];
+                prBranch = payload.pull_request.head.ref;
                 core.info("The PR is from a branch in the repository. Reading the config in ".concat(prBranch));
+                params = context.repo({ path: ".github/".concat(filename) });
                 return [4 /*yield*/, context.octokit.config.get(__assign(__assign({}, params), { branch: prBranch }))];
             case 1:
                 config = (_a.sent()).config;

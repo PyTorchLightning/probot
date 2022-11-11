@@ -1,6 +1,7 @@
 import { CheckGroupConfig } from "../types";
 import { Context } from "probot";
 import { parseUserConfig } from "../utils";
+import { PullRequestEvent } from '@octokit/webhooks-types';
 import * as core from '@actions/core'
 
 /**
@@ -12,13 +13,14 @@ import * as core from '@actions/core'
 export const fetchConfig = async (context: Context): Promise<CheckGroupConfig> => {
   let configData: Record<string, unknown> = undefined
   const filename = "checkgroup.yml"
-  const params = context.repo({path: `.github/${filename}`})
-  const repoFullName = `${params.owner}/${params.repo}`;
-  const githubRepository = process.env['GITHUB_REPOSITORY']
+  const payload = context.payload as PullRequestEvent;
+  const repoFullName = payload.pull_request.head.repo.full_name
+  const githubRepository = payload.pull_request.base.repo.full_name
   core.debug(`fetchConfig ${repoFullName} ${githubRepository}`)
   if (repoFullName == githubRepository) {
-    const prBranch =  process.env['GITHUB_HEAD_REF'];
+    const prBranch = payload.pull_request.head.ref;
     core.info(`The PR is from a branch in the repository. Reading the config in ${prBranch}`)
+    const params = context.repo({path: `.github/${filename}`})
     // https://github.com/probot/octokit-plugin-config
     const { config } = await context.octokit.config.get({...params, branch: prBranch})
     configData = config
