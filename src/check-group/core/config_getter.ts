@@ -19,10 +19,12 @@ export const fetchConfig = async (context: Context): Promise<CheckGroupConfig> =
   if (repoFullName == githubRepository) {
     const prBranch =  process.env['GITHUB_HEAD_REF'];
     core.info(`The PR is from a branch in the repository. Reading the config in ${prBranch}`)
-    configData = await context.octokit.config.get({...params, branch: prBranch}) as Record<string, unknown>;
+    // https://github.com/probot/octokit-plugin-config
+    const { config } = await context.octokit.config.get({...params, branch: prBranch})
+    configData = config
   } else {
     // this will pull the config from master
-    configData = await context.config(filename) as Record<string, unknown>;  
+    configData = await context.config(filename);  
   }
   core.debug(`configData: ${JSON.stringify(configData)}`)
   return parseUserConfig(configData);

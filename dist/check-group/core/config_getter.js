@@ -80,7 +80,7 @@ var core = __importStar(require("@actions/core"));
  * @returns The configuration or default configuration if non exists.
  */
 var fetchConfig = function (context) { return __awaiter(void 0, void 0, void 0, function () {
-    var configData, filename, params, repoFullName, githubRepository, prBranch;
+    var configData, filename, params, repoFullName, githubRepository, prBranch, config;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -95,12 +95,13 @@ var fetchConfig = function (context) { return __awaiter(void 0, void 0, void 0, 
                 core.info("The PR is from a branch in the repository. Reading the config in ".concat(prBranch));
                 return [4 /*yield*/, context.octokit.config.get(__assign(__assign({}, params), { branch: prBranch }))];
             case 1:
-                configData = (_a.sent());
+                config = (_a.sent()).config;
+                configData = config;
                 return [3 /*break*/, 4];
             case 2: return [4 /*yield*/, context.config(filename)];
             case 3:
                 // this will pull the config from master
-                configData = (_a.sent());
+                configData = _a.sent();
                 _a.label = 4;
             case 4:
                 core.debug("configData: ".concat(JSON.stringify(configData)));
