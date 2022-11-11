@@ -7,7 +7,7 @@ import {
   generateProgressSummary,
 } from "../utils";
 import * as core from '@actions/core'
-import type { CheckGroupConfig } from "../types";
+import type { CheckGroupConfig, CheckResult } from "../types";
 import type { Context } from "probot";
 import { fetchConfig } from "./config_getter";
 import { matchFilenamesToSubprojects } from "../utils";
@@ -70,19 +70,14 @@ export class CheckGroup {
     )
   }
 
-  async runCheck(subprojs, tries: number, interval: number) {
+  async runCheck(subprojs: SubProjConfig[], tries: number, interval: number): Promise<void> {
     try {
       // print in a group to reduce verbosity
       core.startGroup(`Check ${tries}`);
       const postedChecks = await getPostedChecks(this.context, this.sha);
       core.debug(`postedChecks: ${JSON.stringify(postedChecks)}`);
-      
       const conclusion = satisfyExpectedChecks(subprojs, postedChecks);
-      const summary = generateProgressSummary(subprojs, postedChecks)
-      const details = generateProgressDetails(subprojs, postedChecks)
-      core.info(
-        `${this.config.customServiceName} conclusion: '${conclusion}':\n${summary}\n${details}`
-      )
+      this.notifyProgress(subprojs, postedChecks, conclusion)
       core.endGroup();
     
       if (conclusion === "all_passing") {
@@ -99,6 +94,18 @@ export class CheckGroup {
       clearTimeout(this.intervalTimer)
       clearTimeout(this.timeoutTimer)
     }
+  }
+
+  async notifyProgress(
+    subprojs: SubProjConfig[],
+    postedChecks: Record<string, string>,
+    conclusion: CheckResult
+  ): Promise<void> {
+    const summary = generateProgressSummary(subprojs, postedChecks)
+    const details = generateProgressDetails(subprojs, postedChecks)
+    core.info(
+      `${this.config.customServiceName} conclusion: '${conclusion}':\n${summary}\n${details}`
+    )
   } 
 
   /**

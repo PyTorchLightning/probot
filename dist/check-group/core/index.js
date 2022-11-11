@@ -117,7 +117,7 @@ var CheckGroup = /** @class */ (function () {
     };
     CheckGroup.prototype.runCheck = function (subprojs, tries, interval) {
         return __awaiter(this, void 0, void 0, function () {
-            var postedChecks, conclusion, summary, details, error_1;
+            var postedChecks, conclusion, error_1;
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -130,9 +130,7 @@ var CheckGroup = /** @class */ (function () {
                         postedChecks = _a.sent();
                         core.debug("postedChecks: ".concat(JSON.stringify(postedChecks)));
                         conclusion = (0, utils_3.satisfyExpectedChecks)(subprojs, postedChecks);
-                        summary = (0, utils_1.generateProgressSummary)(subprojs, postedChecks);
-                        details = (0, utils_1.generateProgressDetails)(subprojs, postedChecks);
-                        core.info("".concat(this.config.customServiceName, " conclusion: '").concat(conclusion, "':\n").concat(summary, "\n").concat(details));
+                        this.notifyProgress(subprojs, postedChecks, conclusion);
                         core.endGroup();
                         if (conclusion === "all_passing") {
                             core.info("All required checks were successful!");
@@ -152,6 +150,17 @@ var CheckGroup = /** @class */ (function () {
                         return [3 /*break*/, 3];
                     case 3: return [2 /*return*/];
                 }
+            });
+        });
+    };
+    CheckGroup.prototype.notifyProgress = function (subprojs, postedChecks, conclusion) {
+        return __awaiter(this, void 0, void 0, function () {
+            var summary, details;
+            return __generator(this, function (_a) {
+                summary = (0, utils_1.generateProgressSummary)(subprojs, postedChecks);
+                details = (0, utils_1.generateProgressDetails)(subprojs, postedChecks);
+                core.info("".concat(this.config.customServiceName, " conclusion: '").concat(conclusion, "':\n").concat(summary, "\n").concat(details));
+                return [2 /*return*/];
             });
         });
     };
