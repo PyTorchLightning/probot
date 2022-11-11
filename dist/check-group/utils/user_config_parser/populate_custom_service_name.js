@@ -4,7 +4,6 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.populateCustomServiceName = void 0;
-var config_1 = require("../../config");
 /**
  * Parse the custom service name from the user
  * configuration if present.
@@ -16,7 +15,7 @@ function populateCustomServiceName(configData, config) {
         config.customServiceName = configData["custom_service_name"];
     }
     else {
-        config.customServiceName = config_1.defaultCheckId;
+        config.customServiceName = "Check Group";
     }
 }
 exports.populateCustomServiceName = populateCustomServiceName;

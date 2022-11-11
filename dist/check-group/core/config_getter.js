@@ -71,7 +71,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.fetchConfig = void 0;
-var config_1 = require("../config");
 var utils_1 = require("../utils");
 var core = __importStar(require("@actions/core"));
 /**
@@ -81,12 +80,13 @@ var core = __importStar(require("@actions/core"));
  * @returns The configuration or default configuration if non exists.
  */
 var fetchConfig = function (context) { return __awaiter(void 0, void 0, void 0, function () {
-    var configData, params, repoFullName, githubRepository, prBranch;
+    var configData, filename, params, repoFullName, githubRepository, prBranch;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 configData = undefined;
-                params = context.repo({ path: config_1.configPath });
+                filename = "checkgroup.yml";
+                params = context.repo({ path: ".github/".concat(filename) });
                 repoFullName = "".concat(params.owner, "/").concat(params.repo);
                 githubRepository = process.env['GITHUB_REPOSITORY'];
                 core.debug("fetchConfig ".concat(repoFullName, " ").concat(githubRepository));
@@ -97,7 +97,7 @@ var fetchConfig = function (context) { return __awaiter(void 0, void 0, void 0, 
             case 1:
                 configData = (_a.sent());
                 return [3 /*break*/, 4];
-            case 2: return [4 /*yield*/, context.config(config_1.configPath)];
+            case 2: return [4 /*yield*/, context.config(filename)];
             case 3:
                 // this will pull the config from master
                 configData = (_a.sent());

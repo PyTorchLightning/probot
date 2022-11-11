@@ -3,7 +3,6 @@
  */
 
 import { CheckGroupConfig } from "../../types";
-import { defaultCheckId } from "../../config";
 
 /**
  * Parse the custom service name from the user
@@ -18,6 +17,6 @@ export function populateCustomServiceName(
   if ("custom_service_name" in configData) {
     config.customServiceName = configData["custom_service_name"] as string;
   } else {
-    config.customServiceName = defaultCheckId;
+    config.customServiceName = "Check Group";
   }
 }
