@@ -6,7 +6,6 @@ import {
   CheckGroupConfig,
   SubProjCheck,
   SubProjConfig,
-  SubProjPath,
 } from "../../types";
 import * as core from '@actions/core'
 
@@ -17,17 +16,11 @@ export function parseProjectId(subprojData: Record<string, unknown>): string {
   return subprojData["id"] as string;
 }
 
-export function parseProjectPaths(subprojData: Record<string, unknown>): SubProjPath[] {
+export function parseProjectPaths(subprojData: Record<string, unknown>): string[] {
   if (!("paths" in subprojData) || subprojData["paths"] == null) {
     core.setFailed(`The list of paths for the '${subprojData["id"]}' group is not defined`);
   }
-  const projPaths: SubProjPath[] = [];
-  const locations: string[] = subprojData["paths"] as string[];
-  locations.forEach((loc) => {
-    projPaths.push({
-      location: loc,
-    });
-  });
+  const projPaths: string[] = subprojData["paths"] as string[];
   if (projPaths.length == 0) {
     core.setFailed(`The list of paths for the '${subprojData["id"]}' group is empty`);
   }
