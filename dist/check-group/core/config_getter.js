@@ -71,7 +71,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.fetchConfig = void 0;
-var utils_1 = require("../utils");
+var user_config_parser_1 = require("./user_config_parser");
 var core = __importStar(require("@actions/core"));
 /**
  * Fetches the app configuration from the user's repository.
@@ -106,7 +106,7 @@ var fetchConfig = function (context) { return __awaiter(void 0, void 0, void 0, 
                 _a.label = 4;
             case 4:
                 core.debug("configData: ".concat(JSON.stringify(configData)));
-                return [2 /*return*/, (0, utils_1.parseUserConfig)(configData)];
+                return [2 /*return*/, (0, user_config_parser_1.parseUserConfig)(configData)];
         }
     });
 }); };

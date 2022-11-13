@@ -1,18 +1,17 @@
 /**
  * @module Core
  */
-
-import {
+ import * as core from '@actions/core'
+ import {
   generateProgressDetails,
   generateProgressSummary,
-} from "../utils";
-import * as core from '@actions/core'
-import type { CheckGroupConfig, CheckResult } from "../types";
-import type { Context } from "probot";
+  commentOnPr,
+} from "./generate_progress";
+import { matchFilenamesToSubprojects } from "./subproj_matching";
+import { satisfyExpectedChecks } from "./satisfy_expected_checks";
 import { fetchConfig } from "./config_getter";
-import { matchFilenamesToSubprojects } from "../utils";
-import { satisfyExpectedChecks } from "../utils";
-import { SubProjConfig } from "../types";
+import type { CheckGroupConfig, CheckResult, SubProjConfig } from "../types";
+import type { Context } from "probot";
 
 /**
  * The orchestration class.
@@ -106,6 +105,7 @@ export class CheckGroup {
     core.info(
       `${this.config.customServiceName} conclusion: '${conclusion}':\n${summary}\n${details}`
     )
+    commentOnPr(this.context)
   } 
 
   /**

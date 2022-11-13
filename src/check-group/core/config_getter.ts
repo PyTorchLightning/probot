@@ -1,6 +1,6 @@
 import { CheckGroupConfig } from "../types";
 import { Context } from "probot";
-import { parseUserConfig } from "../utils";
+import { parseUserConfig } from "./user_config_parser";
 import { PullRequestEvent } from '@octokit/webhooks-types';
 import * as core from '@actions/core'
 

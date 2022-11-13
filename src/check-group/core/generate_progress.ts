@@ -2,7 +2,7 @@ import { ProgressReport, SubProjConfig } from "../types";
 import { Context } from "probot";
 
 
-export const generateProgressReport = (
+const generateProgressReport = (
   subprojects: SubProjConfig[],
   checksStatusLookup: Record<string, string>,
 ): ProgressReport => {
@@ -52,7 +52,7 @@ export const generateProgressSummary = (
   return message;
 };
 
-export const statusToMark = (
+const statusToMark = (
   check: string,
   checksStatusLookup: Record<string, string>,
 ): string => {
@@ -112,9 +112,9 @@ export const generateProgressDetails = (
   return progress;
 };
 
-export const PR_COMMENT_START = "<!-- checkgroup-comment-start -->";
+const PR_COMMENT_START = "<!-- checkgroup-comment-start -->";
 
-export function formPrComment(): string {
+function formPrComment(): string {
   return (
     PR_COMMENT_START
     + `\nHello! This is a test`
@@ -122,7 +122,7 @@ export function formPrComment(): string {
   )
 }
 
-export async function getPrComment(context: Context): Promise<{id: number; body: string}> {
+async function getPrComment(context: Context): Promise<{id: number; body: string}> {
   const params = context.issue()
   const commentsRes = await context.octokit.rest.issues.listComments(params);
   for (const comment of commentsRes.data) {
@@ -134,7 +134,7 @@ export async function getPrComment(context: Context): Promise<{id: number; body:
 }
 
 
-export async function comment(context: Context) {
+export async function commentOnPr(context: Context) {
   const existingData = await getPrComment(context);
   context.log.debug(`existingData: ${JSON.stringify(existingData)}`)
   const newComment = formPrComment();

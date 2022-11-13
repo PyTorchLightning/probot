@@ -1,7 +1,4 @@
 "use strict";
-/**
- * @module Core
- */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -63,12 +60,15 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.fetchConfig = exports.CheckGroup = void 0;
-var utils_1 = require("../utils");
+/**
+ * @module Core
+ */
 var core = __importStar(require("@actions/core"));
+var generate_progress_1 = require("./generate_progress");
+var subproj_matching_1 = require("./subproj_matching");
+var satisfy_expected_checks_1 = require("./satisfy_expected_checks");
 var config_getter_1 = require("./config_getter");
 Object.defineProperty(exports, "fetchConfig", { enumerable: true, get: function () { return config_getter_1.fetchConfig; } });
-var utils_2 = require("../utils");
-var utils_3 = require("../utils");
 /**
  * The orchestration class.
  */
@@ -91,7 +91,7 @@ var CheckGroup = /** @class */ (function () {
                     case 1:
                         filenames = _a.sent();
                         core.info("Files are: ".concat(JSON.stringify(filenames)));
-                        subprojs = (0, utils_2.matchFilenamesToSubprojects)(filenames, this.config.subProjects);
+                        subprojs = (0, subproj_matching_1.matchFilenamesToSubprojects)(filenames, this.config.subProjects);
                         core.debug("Matching subprojects are: ".concat(JSON.stringify(subprojs)));
                         if (core.isDebug()) {
                             expectedChecks = collectExpectedChecks(subprojs);
@@ -129,7 +129,7 @@ var CheckGroup = /** @class */ (function () {
                     case 1:
                         postedChecks = _a.sent();
                         core.debug("postedChecks: ".concat(JSON.stringify(postedChecks)));
-                        conclusion = (0, utils_3.satisfyExpectedChecks)(subprojs, postedChecks);
+                        conclusion = (0, satisfy_expected_checks_1.satisfyExpectedChecks)(subprojs, postedChecks);
                         this.notifyProgress(subprojs, postedChecks, conclusion);
                         core.endGroup();
                         if (conclusion === "all_passing") {
@@ -157,9 +157,10 @@ var CheckGroup = /** @class */ (function () {
         return __awaiter(this, void 0, void 0, function () {
             var summary, details;
             return __generator(this, function (_a) {
-                summary = (0, utils_1.generateProgressSummary)(subprojs, postedChecks);
-                details = (0, utils_1.generateProgressDetails)(subprojs, postedChecks);
+                summary = (0, generate_progress_1.generateProgressSummary)(subprojs, postedChecks);
+                details = (0, generate_progress_1.generateProgressDetails)(subprojs, postedChecks);
                 core.info("".concat(this.config.customServiceName, " conclusion: '").concat(conclusion, "':\n").concat(summary, "\n").concat(details));
+                (0, generate_progress_1.commentOnPr)(this.context);
                 return [2 /*return*/];
             });
         });
