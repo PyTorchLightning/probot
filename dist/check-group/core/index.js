@@ -76,6 +76,7 @@ var CheckGroup = /** @class */ (function () {
     function CheckGroup(pullRequestNumber, config, context, sha) {
         this.intervalTimer = setTimeout(function () { return ''; }, 0);
         this.timeoutTimer = setTimeout(function () { return ''; }, 0);
+        this.inputs = {};
         this.pullRequestNumber = pullRequestNumber;
         this.config = config;
         this.context = context;
@@ -83,7 +84,7 @@ var CheckGroup = /** @class */ (function () {
     }
     CheckGroup.prototype.run = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var filenames, subprojs, expectedChecks, interval, timeout;
+            var filenames, subprojs, expectedChecks, maintainers, owner, interval, timeout;
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -97,18 +98,24 @@ var CheckGroup = /** @class */ (function () {
                             expectedChecks = collectExpectedChecks(subprojs);
                             core.debug("Expected checks are: ".concat(JSON.stringify(expectedChecks)));
                         }
+                        maintainers = core.getInput('maintainers');
+                        this.inputs.maintainers = maintainers;
+                        owner = core.getInput('owner');
+                        this.inputs.owner = owner;
                         interval = parseInt(core.getInput('interval'));
+                        this.inputs.interval = interval;
                         core.info("Check interval: ".concat(interval));
                         this.runCheck(subprojs, 1, interval * 1000);
                         timeout = parseInt(core.getInput('timeout'));
+                        this.inputs.timeout = timeout;
                         core.info("Timeout: ".concat(timeout));
                         // set a timeout that will stop the job to avoid polling the GitHub API infinitely
                         this.timeoutTimer = setTimeout(function () {
                             clearTimeout(_this.intervalTimer);
                             core.setFailed("The timeout of ".concat(timeout, " minutes has triggered but not all required jobs were passing.")
                                 + " This job will need to be re-run to merge your PR."
-                                + " If you do not have write access to the repository you can ask ".concat(core.getInput('maintainers'), " to re-run it for you.")
-                                + " If you have any other questions, you can reach out to ".concat(core.getInput('owner'), " for help."));
+                                + " If you do not have write access to the repository you can ask ".concat(maintainers, " to re-run it for you.")
+                                + " If you have any other questions, you can reach out to ".concat(owner, " for help."));
                         }, timeout * 60 * 1000);
                         return [2 /*return*/];
                 }
@@ -155,12 +162,11 @@ var CheckGroup = /** @class */ (function () {
     };
     CheckGroup.prototype.notifyProgress = function (subprojs, postedChecks, conclusion) {
         return __awaiter(this, void 0, void 0, function () {
-            var summary, details;
+            var details;
             return __generator(this, function (_a) {
-                summary = (0, generate_progress_1.generateProgressSummary)(subprojs, postedChecks);
-                details = (0, generate_progress_1.generateProgressDetails)(subprojs, postedChecks);
-                core.info("".concat(this.config.customServiceName, " conclusion: '").concat(conclusion, "':\n").concat(summary, "\n").concat(details));
-                (0, generate_progress_1.commentOnPr)(this.context);
+                details = (0, generate_progress_1.generateProgressDetailsCLI)(subprojs, postedChecks);
+                core.info("".concat(this.config.customServiceName, " conclusion: '").concat(conclusion, "':\n").concat(details));
+                (0, generate_progress_1.commentOnPr)(this.context, conclusion, this.inputs, subprojs, postedChecks);
                 return [2 /*return*/];
             });
         });

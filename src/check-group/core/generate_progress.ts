@@ -1,56 +1,7 @@
-import { ProgressReport, SubProjConfig } from "../types";
+import { CheckResult, SubProjConfig } from "../types";
 import { Context } from "probot";
+import { parse } from "path";
 
-
-const generateProgressReport = (
-  subprojects: SubProjConfig[],
-  checksStatusLookup: Record<string, string>,
-): ProgressReport => {
-  const report: ProgressReport = {
-    completed: [],
-    expected: [],
-    failed: [],
-    missing: [],
-    needAction: [],
-    running: [],
-    succeeded: [],
-  };
-  const lookup: Record<string, boolean> = {};
-  subprojects.forEach((proj) => {
-    proj.checks.forEach((check) => {
-      /* eslint-disable security/detect-object-injection */
-      if (!(check.id in lookup)) {
-        lookup[check.id] = true;
-        report.expected?.push(check.id);
-        if (check.id in checksStatusLookup) {
-          const status = checksStatusLookup[check.id];
-          if (status === "success") {
-            report.completed?.push(check.id);
-            report.succeeded?.push(check.id);
-          }
-          if (status === "failure") {
-            report.completed?.push(check.id);
-            report.failed?.push(check.id);
-          }
-          if (status === "pending") {
-            report.running?.push(check.id);
-          }
-        }
-      }
-      /* eslint-enable security/detect-object-injection */
-    });
-  });
-  return report;
-};
-
-export const generateProgressSummary = (
-  subprojects: SubProjConfig[],
-  checksStatusLookup: Record<string, string>,
-): string => {
-  const report = generateProgressReport(subprojects, checksStatusLookup);
-  const message = `Progress: ${report.completed?.length} completed, ${report.running?.length} pending`;
-  return message;
-};
 
 const statusToMark = (
   check: string,
@@ -69,16 +20,9 @@ const statusToMark = (
   return "❓";
 };
 
-/**
- * Generates a progress report for currently finished checks
- * which will be posted in the status check report.
- *
- * @param subprojects The subprojects that the PR matches.
- * @param checksStatusLookup The lookup table for checks status.
- */
-export const generateProgressDetails = (
+export const generateProgressDetailsCLI = (
   subprojects: SubProjConfig[],
-  checksStatusLookup: Record<string, string>,
+  postedChecks: Record<string, string>,
 ): string => {
   let progress = "";
 
@@ -88,8 +32,8 @@ export const generateProgressDetails = (
     // for padding
     const longestLength = Math.max(...(subproject.checks.map(check => check.id.length)));
     subproject.checks.forEach((check) => {
-      const mark = statusToMark(check.id, checksStatusLookup);
-      let status = (check.id in checksStatusLookup) ? checksStatusLookup[check.id] : 'no_status'
+      const mark = statusToMark(check.id, postedChecks);
+      let status = (check.id in postedChecks) ? postedChecks[check.id] : 'no_status'
       status = status || 'undefined';
       progress += `${check.id.padEnd(longestLength, ' ')} | ${mark} | ${status.padEnd(12, ' ')}\n`;
     });
@@ -99,12 +43,12 @@ export const generateProgressDetails = (
 
   progress += "## Currently received checks\n";
   let longestLength = 1;
-  for (const availableCheck in checksStatusLookup) {
+  for (const availableCheck in postedChecks) {
     longestLength = Math.max(longestLength, availableCheck.length);
   }
-  for (const availableCheck in checksStatusLookup) {
-    const mark = statusToMark(availableCheck, checksStatusLookup);
-    let status = (availableCheck in checksStatusLookup) ? checksStatusLookup[availableCheck] : 'no_status'
+  for (const availableCheck in postedChecks) {
+    const mark = statusToMark(availableCheck, postedChecks);
+    let status = (availableCheck in postedChecks) ? postedChecks[availableCheck] : 'no_status'
     status = status || 'undefined';
     progress += `${availableCheck.padEnd(longestLength, ' ')} | ${mark} | ${status.padEnd(12, ' ')}\n`;
   }
@@ -112,13 +56,54 @@ export const generateProgressDetails = (
   return progress;
 };
 
+export const generateProgressDetailsMarkdown = (
+  subprojects: SubProjConfig[],
+  postedChecks: Record<string, string>,
+): string => {
+  let progress = "## Groups summary\n";
+  subprojects.forEach((subproject) => {
+    progress += `### ${subproject.id}\n`;
+    progress += "| Check ID | Status |\n";
+    progress += "| -------- | ------ |\n";
+    subproject.checks.forEach((check) => {
+      const mark = statusToMark(check.id, postedChecks);
+      let status = (check.id in postedChecks) ? postedChecks[check.id] : 'no_status'
+      status = status || 'undefined';
+      progress += `| ${check.id} | ${mark}: ${status} |\n`;
+    });
+    progress += "\n";
+  });
+  progress += "\n";
+  return progress;
+};
+
 const PR_COMMENT_START = "<!-- checkgroup-comment-start -->";
 
-function formPrComment(): string {
+function formPrComment(
+  conclusion: CheckResult,
+  inputs: Record<string, any>,
+  subprojects: SubProjConfig[],
+  postedChecks: Record<string, string>
+): string {
+  let parsedConclusion = conclusion.replace("_", " ")
+  // capitalize
+  parsedConclusion = parsedConclusion.charAt(0).toUpperCase() + parsedConclusion.slice(1);
+  const hasFailed = conclusion === "has_failure"
+  const conclusionEmoji = (conclusion === "all_passing") ? "🟢": (hasFailed) ? "🔴" : "🟡"
+  const failedMesage = (
+    `\n> This job will need to be re-run to merge your PR.`
+    + ` If you do not have write access to the repository you can ask ${inputs.maintainers} to re-run it for you.`
+    + ` If you have any other questions, you can reach out to ${inputs.owner} for help.`
+  )
+  const progressDetails = generateProgressDetailsMarkdown(subprojects, postedChecks)
   return (
     PR_COMMENT_START
-    + `\nHello! This is a test`
-    + "\nThis comment was automatically generated by CheckGroup"
+    + `\n# ⚡ Required checks status: ${parsedConclusion} ${conclusionEmoji}`
+    + ((hasFailed) ? failedMesage : "")
+    + ((subprojects.length) ? `\n${progressDetails}` : "\nNo groups match the files changed in this PR.")
+    + "\n\n---"
+    + `\nThis comment was automatically generated and updates for ${inputs.timeout} minutes `
+    + `every ${inputs.interval} seconds.`
   )
 }
 
@@ -134,10 +119,16 @@ async function getPrComment(context: Context): Promise<{id: number; body: string
 }
 
 
-export async function commentOnPr(context: Context) {
+export async function commentOnPr(
+  context: Context,
+  conclusion: CheckResult,
+  inputs: Record<string, any>,
+  subprojects: SubProjConfig[],
+  postedChecks: Record<string, string>,
+) {
   const existingData = await getPrComment(context);
   context.log.debug(`existingData: ${JSON.stringify(existingData)}`)
-  const newComment = formPrComment();
+  const newComment = formPrComment(conclusion, inputs, subprojects, postedChecks);
   if (existingData.body === newComment) {
     return;
   }

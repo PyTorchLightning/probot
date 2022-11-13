@@ -3,21 +3,6 @@
  * @module CheckGroupTypes
  */
 
-/**
- * The status of the current running checks
- * which will then be converted to the report
- * posted on the check.
- */
-export interface ProgressReport {
-  completed?: string[];
-  expected?: string[];
-  failed?: string[];
-  missing?: string[];
-  needAction?: string[];
-  running?: string[];
-  succeeded?: string[];
-}
-
 export interface SubProjCheck {
   /**
    * The ID of the check which should

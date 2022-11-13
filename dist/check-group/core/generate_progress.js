@@ -36,52 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.commentOnPr = exports.generateProgressDetails = exports.generateProgressSummary = void 0;
-var generateProgressReport = function (subprojects, checksStatusLookup) {
-    var report = {
-        completed: [],
-        expected: [],
-        failed: [],
-        missing: [],
-        needAction: [],
-        running: [],
-        succeeded: [],
-    };
-    var lookup = {};
-    subprojects.forEach(function (proj) {
-        proj.checks.forEach(function (check) {
-            var _a, _b, _c, _d, _e, _f;
-            /* eslint-disable security/detect-object-injection */
-            if (!(check.id in lookup)) {
-                lookup[check.id] = true;
-                (_a = report.expected) === null || _a === void 0 ? void 0 : _a.push(check.id);
-                if (check.id in checksStatusLookup) {
-                    var status_1 = checksStatusLookup[check.id];
-                    if (status_1 === "success") {
-                        (_b = report.completed) === null || _b === void 0 ? void 0 : _b.push(check.id);
-                        (_c = report.succeeded) === null || _c === void 0 ? void 0 : _c.push(check.id);
-                    }
-                    if (status_1 === "failure") {
-                        (_d = report.completed) === null || _d === void 0 ? void 0 : _d.push(check.id);
-                        (_e = report.failed) === null || _e === void 0 ? void 0 : _e.push(check.id);
-                    }
-                    if (status_1 === "pending") {
-                        (_f = report.running) === null || _f === void 0 ? void 0 : _f.push(check.id);
-                    }
-                }
-            }
-            /* eslint-enable security/detect-object-injection */
-        });
-    });
-    return report;
-};
-var generateProgressSummary = function (subprojects, checksStatusLookup) {
-    var _a, _b;
-    var report = generateProgressReport(subprojects, checksStatusLookup);
-    var message = "Progress: ".concat((_a = report.completed) === null || _a === void 0 ? void 0 : _a.length, " completed, ").concat((_b = report.running) === null || _b === void 0 ? void 0 : _b.length, " pending");
-    return message;
-};
-exports.generateProgressSummary = generateProgressSummary;
+exports.commentOnPr = exports.generateProgressDetailsMarkdown = exports.generateProgressDetailsCLI = void 0;
 var statusToMark = function (check, checksStatusLookup) {
     if (check in checksStatusLookup) {
         if (checksStatusLookup[check] == "success") {
@@ -96,14 +51,7 @@ var statusToMark = function (check, checksStatusLookup) {
     }
     return "❓";
 };
-/**
- * Generates a progress report for currently finished checks
- * which will be posted in the status check report.
- *
- * @param subprojects The subprojects that the PR matches.
- * @param checksStatusLookup The lookup table for checks status.
- */
-var generateProgressDetails = function (subprojects, checksStatusLookup) {
+var generateProgressDetailsCLI = function (subprojects, postedChecks) {
     var progress = "";
     // these are the required subprojects
     subprojects.forEach(function (subproject) {
@@ -111,8 +59,8 @@ var generateProgressDetails = function (subprojects, checksStatusLookup) {
         // for padding
         var longestLength = Math.max.apply(Math, (subproject.checks.map(function (check) { return check.id.length; })));
         subproject.checks.forEach(function (check) {
-            var mark = statusToMark(check.id, checksStatusLookup);
-            var status = (check.id in checksStatusLookup) ? checksStatusLookup[check.id] : 'no_status';
+            var mark = statusToMark(check.id, postedChecks);
+            var status = (check.id in postedChecks) ? postedChecks[check.id] : 'no_status';
             status = status || 'undefined';
             progress += "".concat(check.id.padEnd(longestLength, ' '), " | ").concat(mark, " | ").concat(status.padEnd(12, ' '), "\n");
         });
@@ -121,24 +69,55 @@ var generateProgressDetails = function (subprojects, checksStatusLookup) {
     progress += "\n";
     progress += "## Currently received checks\n";
     var longestLength = 1;
-    for (var availableCheck in checksStatusLookup) {
+    for (var availableCheck in postedChecks) {
         longestLength = Math.max(longestLength, availableCheck.length);
     }
-    for (var availableCheck in checksStatusLookup) {
-        var mark = statusToMark(availableCheck, checksStatusLookup);
-        var status_2 = (availableCheck in checksStatusLookup) ? checksStatusLookup[availableCheck] : 'no_status';
-        status_2 = status_2 || 'undefined';
-        progress += "".concat(availableCheck.padEnd(longestLength, ' '), " | ").concat(mark, " | ").concat(status_2.padEnd(12, ' '), "\n");
+    for (var availableCheck in postedChecks) {
+        var mark = statusToMark(availableCheck, postedChecks);
+        var status_1 = (availableCheck in postedChecks) ? postedChecks[availableCheck] : 'no_status';
+        status_1 = status_1 || 'undefined';
+        progress += "".concat(availableCheck.padEnd(longestLength, ' '), " | ").concat(mark, " | ").concat(status_1.padEnd(12, ' '), "\n");
     }
     progress += "\n";
     return progress;
 };
-exports.generateProgressDetails = generateProgressDetails;
+exports.generateProgressDetailsCLI = generateProgressDetailsCLI;
+var generateProgressDetailsMarkdown = function (subprojects, postedChecks) {
+    var progress = "## Groups summary\n";
+    subprojects.forEach(function (subproject) {
+        progress += "### ".concat(subproject.id, "\n");
+        progress += "| Check ID | Status |\n";
+        progress += "| -------- | ------ |\n";
+        subproject.checks.forEach(function (check) {
+            var mark = statusToMark(check.id, postedChecks);
+            var status = (check.id in postedChecks) ? postedChecks[check.id] : 'no_status';
+            status = status || 'undefined';
+            progress += "| ".concat(check.id, " | ").concat(mark, ": ").concat(status, " |\n");
+        });
+        progress += "\n";
+    });
+    progress += "\n";
+    return progress;
+};
+exports.generateProgressDetailsMarkdown = generateProgressDetailsMarkdown;
 var PR_COMMENT_START = "<!-- checkgroup-comment-start -->";
-function formPrComment() {
+function formPrComment(conclusion, inputs, subprojects, postedChecks) {
+    var parsedConclusion = conclusion.replace("_", " ");
+    // capitalize
+    parsedConclusion = parsedConclusion.charAt(0).toUpperCase() + parsedConclusion.slice(1);
+    var hasFailed = conclusion === "has_failure";
+    var conclusionEmoji = (conclusion === "all_passing") ? "🟢" : (hasFailed) ? "🔴" : "🟡";
+    var failedMesage = ("\n> This job will need to be re-run to merge your PR."
+        + " If you do not have write access to the repository you can ask ".concat(inputs.maintainers, " to re-run it for you.")
+        + " If you have any other questions, you can reach out to ".concat(inputs.owner, " for help."));
+    var progressDetails = (0, exports.generateProgressDetailsMarkdown)(subprojects, postedChecks);
     return (PR_COMMENT_START
-        + "\nHello! This is a test"
-        + "\nThis comment was automatically generated by CheckGroup");
+        + "\n# \u26A1 Required checks status: ".concat(parsedConclusion, " ").concat(conclusionEmoji)
+        + ((hasFailed) ? failedMesage : "")
+        + ((subprojects.length) ? "\n".concat(progressDetails) : "\nNo groups match the files changed in this PR.")
+        + "\n\n---"
+        + "\nThis comment was automatically generated and updates for ".concat(inputs.timeout, " minutes ")
+        + "every ".concat(inputs.interval, " seconds."));
 }
 function getPrComment(context) {
     return __awaiter(this, void 0, void 0, function () {
@@ -161,7 +140,7 @@ function getPrComment(context) {
         });
     });
 }
-function commentOnPr(context) {
+function commentOnPr(context, conclusion, inputs, subprojects, postedChecks) {
     return __awaiter(this, void 0, void 0, function () {
         var existingData, newComment;
         return __generator(this, function (_a) {
@@ -170,7 +149,7 @@ function commentOnPr(context) {
                 case 1:
                     existingData = _a.sent();
                     context.log.debug("existingData: ".concat(JSON.stringify(existingData)));
-                    newComment = formPrComment();
+                    newComment = formPrComment(conclusion, inputs, subprojects, postedChecks);
                     if (existingData.body === newComment) {
                         return [2 /*return*/];
                     }

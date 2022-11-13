@@ -3,8 +3,7 @@
  */
  import * as core from '@actions/core'
  import {
-  generateProgressDetails,
-  generateProgressSummary,
+  generateProgressDetailsCLI,
   commentOnPr,
 } from "./generate_progress";
 import { matchFilenamesToSubprojects } from "./subproj_matching";
@@ -24,6 +23,7 @@ export class CheckGroup {
 
   intervalTimer: ReturnType<typeof setTimeout> = setTimeout(() => '', 0);
   timeoutTimer: ReturnType<typeof setTimeout> = setTimeout(() => '', 0);
+  inputs: Record<string, any> = {};
 
   constructor(
     pullRequestNumber: number,
@@ -49,11 +49,19 @@ export class CheckGroup {
       core.debug(`Expected checks are: ${JSON.stringify(expectedChecks)}`);
     }
 
+    const maintainers = core.getInput('maintainers')
+    this.inputs.maintainers = maintainers
+
+    const owner = core.getInput('owner')
+    this.inputs.owner = owner
+
     const interval = parseInt(core.getInput('interval'))
+    this.inputs.interval = interval
     core.info(`Check interval: ${interval}`);
     this.runCheck(subprojs, 1, interval * 1000)
 
     const timeout = parseInt(core.getInput('timeout'))
+    this.inputs.timeout = timeout
     core.info(`Timeout: ${timeout}`);
     // set a timeout that will stop the job to avoid polling the GitHub API infinitely
     this.timeoutTimer = setTimeout(
@@ -62,8 +70,8 @@ export class CheckGroup {
         core.setFailed(
           `The timeout of ${timeout} minutes has triggered but not all required jobs were passing.`
           + ` This job will need to be re-run to merge your PR.`
-          + ` If you do not have write access to the repository you can ask ${core.getInput('maintainers')} to re-run it for you.`
-          + ` If you have any other questions, you can reach out to ${core.getInput('owner')} for help.`
+          + ` If you do not have write access to the repository you can ask ${maintainers} to re-run it for you.`
+          + ` If you have any other questions, you can reach out to ${owner} for help.`
         )
       }, timeout * 60 * 1000 
     )
@@ -100,12 +108,11 @@ export class CheckGroup {
     postedChecks: Record<string, string>,
     conclusion: CheckResult
   ): Promise<void> {
-    const summary = generateProgressSummary(subprojs, postedChecks)
-    const details = generateProgressDetails(subprojs, postedChecks)
+    const details = generateProgressDetailsCLI(subprojs, postedChecks)
     core.info(
-      `${this.config.customServiceName} conclusion: '${conclusion}':\n${summary}\n${details}`
+      `${this.config.customServiceName} conclusion: '${conclusion}':\n${details}`
     )
-    commentOnPr(this.context)
+    commentOnPr(this.context, conclusion, this.inputs, subprojs, postedChecks)
   } 
 
   /**
