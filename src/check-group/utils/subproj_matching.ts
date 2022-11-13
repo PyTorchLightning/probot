@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { SubProjConfig, SubProjPath } from "../types";
+import { SubProjConfig } from "../types";
 /* eslint-enable @typescript-eslint/no-unused-vars */
 import minimatch from "minimatch";
 
@@ -15,27 +15,19 @@ export const matchFilenamesToSubprojects = (
 ): SubProjConfig[] => {
   const matchingSubProjs: SubProjConfig[] = [];
   subprojConfigs.forEach((subproj) => {
-    let hasMatching = false;
-    const updatedSubProj = subproj;
-    const updatedPaths: SubProjPath[] = [];
-    subproj.paths.forEach((path) => {
-      const updatedPath = path;
-      if (!updatedPath.matches) {
-        updatedPath.matches = [];
-      }
-      filenames.forEach((filename) => {
-        if (minimatch(filename, path.location)) {
-          hasMatching = true;
-          updatedPath.hit = true;
-          if (updatedPath.matches) {
-            updatedPath.matches.push(filename);
-          }
-        }
-      });
-      updatedPaths.push(updatedPath);
+    const hits: Set<string> = new Set();
+    subproj.paths.forEach((path: string) => {
+      // support for GitHub-style path exclusion
+      // https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#example-including-and-excluding-paths
+      const isNegation = path.startsWith("!")
+      // https://www.npmjs.com/package/minimatch
+      const matches = minimatch.match(filenames, path, {"flipNegate": isNegation})
+      // if it's a negation, delete from the list of hits, otherwise add
+      matches.forEach((match: string) => (isNegation) ? hits.delete(match): hits.add(match))
     });
-    if (hasMatching) {
-      updatedSubProj.paths = updatedPaths;
+    if (hits.size) {
+      const updatedSubProj = subproj;
+      updatedSubProj.paths = Array.from(hits);
       matchingSubProjs.push(updatedSubProj);
     }
   });

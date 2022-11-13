@@ -15,27 +15,19 @@ var minimatch_1 = __importDefault(require("minimatch"));
 var matchFilenamesToSubprojects = function (filenames, subprojConfigs) {
     var matchingSubProjs = [];
     subprojConfigs.forEach(function (subproj) {
-        var hasMatching = false;
-        var updatedSubProj = subproj;
-        var updatedPaths = [];
+        var hits = new Set();
         subproj.paths.forEach(function (path) {
-            var updatedPath = path;
-            if (!updatedPath.matches) {
-                updatedPath.matches = [];
-            }
-            filenames.forEach(function (filename) {
-                if ((0, minimatch_1.default)(filename, path.location)) {
-                    hasMatching = true;
-                    updatedPath.hit = true;
-                    if (updatedPath.matches) {
-                        updatedPath.matches.push(filename);
-                    }
-                }
-            });
-            updatedPaths.push(updatedPath);
+            // support for GitHub-style path exclusion
+            // https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#example-including-and-excluding-paths
+            var isNegation = path.startsWith("!");
+            // https://www.npmjs.com/package/minimatch
+            var matches = minimatch_1.default.match(filenames, path, { "flipNegate": isNegation });
+            // if it's a negation, delete from the list of hits, otherwise add
+            matches.forEach(function (match) { return (isNegation) ? hits.delete(match) : hits.add(match); });
         });
-        if (hasMatching) {
-            updatedSubProj.paths = updatedPaths;
+        if (hits.size) {
+            var updatedSubProj = subproj;
+            updatedSubProj.paths = Array.from(hits);
             matchingSubProjs.push(updatedSubProj);
         }
     });

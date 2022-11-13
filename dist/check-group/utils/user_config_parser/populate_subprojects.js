@@ -39,13 +39,7 @@ function parseProjectPaths(subprojData) {
     if (!("paths" in subprojData) || subprojData["paths"] == null) {
         core.setFailed("The list of paths for the '".concat(subprojData["id"], "' group is not defined"));
     }
-    var projPaths = [];
-    var locations = subprojData["paths"];
-    locations.forEach(function (loc) {
-        projPaths.push({
-            location: loc,
-        });
-    });
+    var projPaths = subprojData["paths"];
     if (projPaths.length == 0) {
         core.setFailed("The list of paths for the '".concat(subprojData["id"], "' group is empty"));
     }

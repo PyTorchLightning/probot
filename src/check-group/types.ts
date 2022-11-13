@@ -18,12 +18,6 @@ export interface ProgressReport {
   succeeded?: string[];
 }
 
-export interface SubProjPath {
-  location: string;
-  hit?: boolean;
-  matches?: string[];
-}
-
 export interface SubProjCheck {
   /**
    * The ID of the check which should
@@ -53,7 +47,7 @@ export interface SubProjConfig {
    * this sub-project within
    * the repository.
    */
-  paths: SubProjPath[];
+  paths: string[];
   /**
    * A list of check IDs that
    * are expected to pass for
