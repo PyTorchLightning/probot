@@ -93,16 +93,17 @@ function formPrComment(
   parsedConclusion = parsedConclusion.charAt(0).toUpperCase() + parsedConclusion.slice(1);
   const hasFailed = conclusion === "has_failure"
   const conclusionEmoji = (conclusion === "all_passing") ? "🟢": (hasFailed) ? "🔴" : "🟡"
+  const lightning = (conclusion === "all_passing") ? "⚡": (hasFailed) ? "⛈️" : "🌩️"
   const failedMesage = (
     `\n**⚠️ This job will need to be re-run to merge your PR.`
-    + ` If you do not have write access to the repository you can ask ${inputs.maintainers} to re-run it for you.`
-    + " If you push a new commit, all of CI will re-trigger."
-    + ` If you have any other questions, you can reach out to ${inputs.owner} for help.**`
+    + ` If you do not have write access to the repository you can ask \`${inputs.maintainers}\` to re-run it for you.`
+    + " If you push a new commit, all of CI will re-trigger ⚠️**"
+    + ` If you have any other questions, you can reach out to \`${inputs.owner}\` for help.`
   )
   const progressDetails = generateProgressDetailsMarkdown(subprojects, postedChecks)
   return (
     PR_COMMENT_START
-    + `\n# ⚡ Required checks status: ${parsedConclusion} ${conclusionEmoji}`
+    + `\n# ${lightning} Required checks status: ${parsedConclusion} ${conclusionEmoji}`
     + ((hasFailed) ? failedMesage : "")
     + ((subprojects.length) ? `\n${progressDetails}` : "\nNo groups match the files changed in this PR.")
     + "\n\n---"
