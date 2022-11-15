@@ -39,11 +39,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.commentOnPr = exports.generateProgressDetailsMarkdown = exports.generateProgressDetailsCLI = void 0;
 var statusToMark = function (check, checksStatusLookup) {
     if (check in checksStatusLookup) {
-        if (checksStatusLookup[check] == "success") {
+        if (checksStatusLookup[check] === "success") {
             return "✅";
         }
-        if (checksStatusLookup[check] == "failure") {
+        if (checksStatusLookup[check] === "failure") {
             return "❌";
+        }
+        if (checksStatusLookup[check] === "cancelled") {
+            return "🚫";
         }
     }
     else {
@@ -86,13 +89,13 @@ var generateProgressDetailsMarkdown = function (subprojects, postedChecks) {
     var progress = "## Groups summary\n";
     subprojects.forEach(function (subproject) {
         progress += "### ".concat(subproject.id, "\n");
-        progress += "| Check ID | Status |\n";
-        progress += "| -------- | ------ |\n";
+        progress += "| Check ID | Status |     |\n";
+        progress += "| -------- | ------ | --- |\n";
         subproject.checks.forEach(function (check) {
             var mark = statusToMark(check.id, postedChecks);
             var status = (check.id in postedChecks) ? postedChecks[check.id] : 'no_status';
             status = status || 'undefined';
-            progress += "| ".concat(check.id, " | ").concat(mark, ": ").concat(status, " |\n");
+            progress += "| ".concat(check.id, " | ").concat(status, " | ").concat(mark, " |\n");
         });
         progress += "\n";
     });
@@ -107,9 +110,10 @@ function formPrComment(conclusion, inputs, subprojects, postedChecks) {
     parsedConclusion = parsedConclusion.charAt(0).toUpperCase() + parsedConclusion.slice(1);
     var hasFailed = conclusion === "has_failure";
     var conclusionEmoji = (conclusion === "all_passing") ? "🟢" : (hasFailed) ? "🔴" : "🟡";
-    var failedMesage = ("\n> This job will need to be re-run to merge your PR."
+    var failedMesage = ("\n**\u26A0\uFE0F This job will need to be re-run to merge your PR."
         + " If you do not have write access to the repository you can ask ".concat(inputs.maintainers, " to re-run it for you.")
-        + " If you have any other questions, you can reach out to ".concat(inputs.owner, " for help."));
+        + " If you push a new commit, all of CI will re-trigger."
+        + " If you have any other questions, you can reach out to ".concat(inputs.owner, " for help.**"));
     var progressDetails = (0, exports.generateProgressDetailsMarkdown)(subprojects, postedChecks);
     return (PR_COMMENT_START
         + "\n# \u26A1 Required checks status: ".concat(parsedConclusion, " ").concat(conclusionEmoji)
@@ -117,7 +121,8 @@ function formPrComment(conclusion, inputs, subprojects, postedChecks) {
         + ((subprojects.length) ? "\n".concat(progressDetails) : "\nNo groups match the files changed in this PR.")
         + "\n\n---"
         + "\nThis comment was automatically generated and updates for ".concat(inputs.timeout, " minutes ")
-        + "every ".concat(inputs.interval, " seconds."));
+        + "every ".concat(inputs.interval, " seconds.")
+        + "\n\nThank you for your contribution! 💜");
 }
 function getPrComment(context) {
     return __awaiter(this, void 0, void 0, function () {

@@ -8,11 +8,14 @@ const statusToMark = (
   checksStatusLookup: Record<string, string>,
 ): string => {
   if (check in checksStatusLookup) {
-    if (checksStatusLookup[check] == "success") {
+    if (checksStatusLookup[check] === "success") {
       return "✅";
     }
-    if (checksStatusLookup[check] == "failure") {
+    if (checksStatusLookup[check] === "failure") {
       return "❌";
+    }
+    if (checksStatusLookup[check] === "cancelled") {
+      return "🚫";
     }
   } else {
     return "⌛";
@@ -63,13 +66,13 @@ export const generateProgressDetailsMarkdown = (
   let progress = "## Groups summary\n";
   subprojects.forEach((subproject) => {
     progress += `### ${subproject.id}\n`;
-    progress += "| Check ID | Status |\n";
-    progress += "| -------- | ------ |\n";
+    progress += "| Check ID | Status |     |\n";
+    progress += "| -------- | ------ | --- |\n";
     subproject.checks.forEach((check) => {
       const mark = statusToMark(check.id, postedChecks);
       let status = (check.id in postedChecks) ? postedChecks[check.id] : 'no_status'
       status = status || 'undefined';
-      progress += `| ${check.id} | ${mark}: ${status} |\n`;
+      progress += `| ${check.id} | ${status} | ${mark} |\n`;
     });
     progress += "\n";
   });
@@ -91,9 +94,10 @@ function formPrComment(
   const hasFailed = conclusion === "has_failure"
   const conclusionEmoji = (conclusion === "all_passing") ? "🟢": (hasFailed) ? "🔴" : "🟡"
   const failedMesage = (
-    `\n> This job will need to be re-run to merge your PR.`
+    `\n**⚠️ This job will need to be re-run to merge your PR.`
     + ` If you do not have write access to the repository you can ask ${inputs.maintainers} to re-run it for you.`
-    + ` If you have any other questions, you can reach out to ${inputs.owner} for help.`
+    + " If you push a new commit, all of CI will re-trigger."
+    + ` If you have any other questions, you can reach out to ${inputs.owner} for help.**`
   )
   const progressDetails = generateProgressDetailsMarkdown(subprojects, postedChecks)
   return (
@@ -104,6 +108,7 @@ function formPrComment(
     + "\n\n---"
     + `\nThis comment was automatically generated and updates for ${inputs.timeout} minutes `
     + `every ${inputs.interval} seconds.`
+    + "\n\nThank you for your contribution! 💜"
   )
 }
 
