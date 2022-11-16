@@ -78,10 +78,10 @@ export const generateProgressDetailsMarkdown = (
     progress += `<summary><b>${subprojectEmoji} ${subproject.id}</b></summary>\n\n`;
     progress += "| Check ID | Status |     |\n";
     progress += "| -------- | ------ | --- |\n";
-    subproject.checks.forEach((check, status) => {
+    for (const [check, status] of Object.entries(subprojectCheckStatus)) {
       const mark = statusToMark(check, postedChecks);
       progress += `| ${check} | ${status} | ${mark} |\n`;
-    });
+    }
     progress += "\n</details>\n\n";
   });
   return progress;

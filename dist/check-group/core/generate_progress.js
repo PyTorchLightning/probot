@@ -102,10 +102,11 @@ var generateProgressDetailsMarkdown = function (subprojects, postedChecks) {
         progress += "<summary><b>".concat(subprojectEmoji, " ").concat(subproject.id, "</b></summary>\n\n");
         progress += "| Check ID | Status |     |\n";
         progress += "| -------- | ------ | --- |\n";
-        subproject.checks.forEach(function (check, status) {
+        for (var _i = 0, _a = Object.entries(subprojectCheckStatus); _i < _a.length; _i++) {
+            var _b = _a[_i], check = _b[0], status_2 = _b[1];
             var mark = statusToMark(check, postedChecks);
-            progress += "| ".concat(check, " | ").concat(status, " | ").concat(mark, " |\n");
-        });
+            progress += "| ".concat(check, " | ").concat(status_2, " | ").concat(mark, " |\n");
+        }
         progress += "\n</details>\n\n";
     });
     return progress;
