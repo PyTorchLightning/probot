@@ -64,9 +64,16 @@ export const generateProgressDetailsMarkdown = (
 ): string => {
   let progress = "## Groups summary\n";
   subprojects.forEach((subproject) => {
+    // get the aggregated status of all statuses in the subproject
+    let subprojectEmoji: string = "🟢"
+    for (const [k, v] of Object.entries(postedChecks)) {
+      if (k in subproject.checks && v !== "success") {
+        subprojectEmoji = "🔴"
+        break
+      }
+    }
+    // generate the markdown table
     progress += "<details>\n\n"
-    const postedChecksValues = Object.values(postedChecks)
-    const subprojectEmoji = (postedChecksValues.every(c => c === "success")) ? "🟢" : "🔴"
     progress += `<summary><b>${subprojectEmoji} ${subproject.id}</b></summary>\n\n`;
     progress += "| Check ID | Status |     |\n";
     progress += "| -------- | ------ | --- |\n";

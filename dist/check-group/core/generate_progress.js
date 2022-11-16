@@ -88,9 +88,17 @@ exports.generateProgressDetailsCLI = generateProgressDetailsCLI;
 var generateProgressDetailsMarkdown = function (subprojects, postedChecks) {
     var progress = "## Groups summary\n";
     subprojects.forEach(function (subproject) {
+        // get the aggregated status of all statuses in the subproject
+        var subprojectEmoji = "🟢";
+        for (var _i = 0, _a = Object.entries(postedChecks); _i < _a.length; _i++) {
+            var _b = _a[_i], k = _b[0], v = _b[1];
+            if (k in subproject.checks && v !== "success") {
+                subprojectEmoji = "🔴";
+                break;
+            }
+        }
+        // generate the markdown table
         progress += "<details>\n\n";
-        var postedChecksValues = Object.values(postedChecks);
-        var subprojectEmoji = (postedChecksValues.every(function (c) { return c === "success"; })) ? "🟢" : "🔴";
         progress += "<summary><b>".concat(subprojectEmoji, " ").concat(subproject.id, "</b></summary>\n\n");
         progress += "| Check ID | Status |     |\n";
         progress += "| -------- | ------ | --- |\n";
