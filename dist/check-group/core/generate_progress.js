@@ -89,11 +89,11 @@ var generateProgressDetailsMarkdown = function (subprojects, postedChecks) {
     var progress = "## Groups summary\n";
     subprojects.forEach(function (subproject) {
         // get the aggregated status of all statuses in the subproject
-        var subprojectEmoji = "🟢";
+        var subprojectEmoji = "🔴";
         for (var _i = 0, _a = Object.entries(postedChecks); _i < _a.length; _i++) {
             var _b = _a[_i], k = _b[0], v = _b[1];
-            if (subproject.checks.includes(k) && v !== "success") {
-                subprojectEmoji = "🔴";
+            if (subproject.checks.includes(k) && v === "success") {
+                subprojectEmoji = "🟢";
                 break;
             }
         }

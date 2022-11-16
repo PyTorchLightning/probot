@@ -65,10 +65,10 @@ export const generateProgressDetailsMarkdown = (
   let progress = "## Groups summary\n";
   subprojects.forEach((subproject) => {
     // get the aggregated status of all statuses in the subproject
-    let subprojectEmoji: string = "🟢"
+    let subprojectEmoji: string = "🔴"
     for (const [k, v] of Object.entries(postedChecks)) {
-      if (subproject.checks.includes(k) && v !== "success") {
-        subprojectEmoji = "🔴"
+      if (subproject.checks.includes(k) && v === "success") {
+        subprojectEmoji = "🟢"
         break
       }
     }
