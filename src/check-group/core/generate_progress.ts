@@ -1,6 +1,5 @@
 import { CheckResult, SubProjConfig } from "../types";
 import { Context } from "probot";
-import { parse } from "path";
 
 
 const statusToMark = (
@@ -65,7 +64,10 @@ export const generateProgressDetailsMarkdown = (
 ): string => {
   let progress = "## Groups summary\n";
   subprojects.forEach((subproject) => {
-    progress += `### ${subproject.id}\n`;
+    progress += "<details>\n\n"
+    const postedChecksValues = Object.values(postedChecks)
+    const subprojectEmoji = (postedChecksValues.every(c => c === "success")) ? "🟢" : "🔴"
+    progress += `<summary><b>${subprojectEmoji} ${subproject.id}</b><summary>\n`;
     progress += "| Check ID | Status |     |\n";
     progress += "| -------- | ------ | --- |\n";
     subproject.checks.forEach((check) => {
@@ -74,9 +76,8 @@ export const generateProgressDetailsMarkdown = (
       status = status || 'undefined';
       progress += `| ${check.id} | ${status} | ${mark} |\n`;
     });
-    progress += "\n";
+    progress += "\n</details>\n";
   });
-  progress += "\n";
   return progress;
 };
 

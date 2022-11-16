@@ -88,7 +88,10 @@ exports.generateProgressDetailsCLI = generateProgressDetailsCLI;
 var generateProgressDetailsMarkdown = function (subprojects, postedChecks) {
     var progress = "## Groups summary\n";
     subprojects.forEach(function (subproject) {
-        progress += "### ".concat(subproject.id, "\n");
+        progress += "<details>\n\n";
+        var postedChecksValues = Object.values(postedChecks);
+        var subprojectEmoji = (postedChecksValues.every(function (c) { return c === "success"; })) ? "🟢" : "🔴";
+        progress += "<summary><b>".concat(subprojectEmoji, " ").concat(subproject.id, "</b><summary>\n");
         progress += "| Check ID | Status |     |\n";
         progress += "| -------- | ------ | --- |\n";
         subproject.checks.forEach(function (check) {
@@ -97,9 +100,8 @@ var generateProgressDetailsMarkdown = function (subprojects, postedChecks) {
             status = status || 'undefined';
             progress += "| ".concat(check.id, " | ").concat(status, " | ").concat(mark, " |\n");
         });
-        progress += "\n";
+        progress += "\n</details>\n";
     });
-    progress += "\n";
     return progress;
 };
 exports.generateProgressDetailsMarkdown = generateProgressDetailsMarkdown;
