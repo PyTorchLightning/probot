@@ -27,18 +27,17 @@ export const satisfyExpectedChecks = (
   let result: CheckResult = "all_passing";
   subProjs.forEach((subProj) => {
     subProj.checks.forEach((check) => {
-      const checkName = check.id;
       /* eslint-disable security/detect-object-injection */
       if (
-        checkName in checksStatusLookup &&
-        checksStatusLookup[checkName] !== "success" &&
-        checksStatusLookup[checkName] !== "pending"
+        check in checksStatusLookup &&
+        checksStatusLookup[check] !== "success" &&
+        checksStatusLookup[check] !== "pending"
       ) {
         result = "has_failure";
       }
       if (
-        (!(checkName in checksStatusLookup) ||
-          checksStatusLookup[checkName] === "pending") &&
+        (!(check in checksStatusLookup) ||
+          checksStatusLookup[check] === "pending") &&
         result !== "has_failure"
       ) {
         result = "pending";

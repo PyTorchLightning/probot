@@ -60,12 +60,12 @@ var generateProgressDetailsCLI = function (subprojects, postedChecks) {
     subprojects.forEach(function (subproject) {
         progress += "Summary for sub-project ".concat(subproject.id, "\n");
         // for padding
-        var longestLength = Math.max.apply(Math, (subproject.checks.map(function (check) { return check.id.length; })));
+        var longestLength = Math.max.apply(Math, (subproject.checks.map(function (check) { return check.length; })));
         subproject.checks.forEach(function (check) {
-            var mark = statusToMark(check.id, postedChecks);
-            var status = (check.id in postedChecks) ? postedChecks[check.id] : 'no_status';
+            var mark = statusToMark(check, postedChecks);
+            var status = (check in postedChecks) ? postedChecks[check] : 'no_status';
             status = status || 'undefined';
-            progress += "".concat(check.id.padEnd(longestLength, ' '), " | ").concat(mark, " | ").concat(status.padEnd(12, ' '), "\n");
+            progress += "".concat(check.padEnd(longestLength, ' '), " | ").concat(mark, " | ").concat(status.padEnd(12, ' '), "\n");
         });
         progress += "\n\n";
     });
@@ -92,7 +92,7 @@ var generateProgressDetailsMarkdown = function (subprojects, postedChecks) {
         var subprojectEmoji = "🟢";
         for (var _i = 0, _a = Object.entries(postedChecks); _i < _a.length; _i++) {
             var _b = _a[_i], k = _b[0], v = _b[1];
-            if (k in subproject.checks && v !== "success") {
+            if (subproject.checks.includes(k) && v !== "success") {
                 subprojectEmoji = "🔴";
                 break;
             }
@@ -103,10 +103,10 @@ var generateProgressDetailsMarkdown = function (subprojects, postedChecks) {
         progress += "| Check ID | Status |     |\n";
         progress += "| -------- | ------ | --- |\n";
         subproject.checks.forEach(function (check) {
-            var mark = statusToMark(check.id, postedChecks);
-            var status = (check.id in postedChecks) ? postedChecks[check.id] : 'no_status';
+            var mark = statusToMark(check, postedChecks);
+            var status = (check in postedChecks) ? postedChecks[check] : 'no_status';
             status = status || 'undefined';
-            progress += "| ".concat(check.id, " | ").concat(status, " | ").concat(mark, " |\n");
+            progress += "| ".concat(check, " | ").concat(status, " | ").concat(mark, " |\n");
         });
         progress += "\n</details>\n\n";
     });

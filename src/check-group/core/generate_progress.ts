@@ -32,12 +32,12 @@ export const generateProgressDetailsCLI = (
   subprojects.forEach((subproject) => {
     progress += `Summary for sub-project ${subproject.id}\n`;
     // for padding
-    const longestLength = Math.max(...(subproject.checks.map(check => check.id.length)));
+    const longestLength = Math.max(...(subproject.checks.map(check => check.length)));
     subproject.checks.forEach((check) => {
-      const mark = statusToMark(check.id, postedChecks);
-      let status = (check.id in postedChecks) ? postedChecks[check.id] : 'no_status'
+      const mark = statusToMark(check, postedChecks);
+      let status = (check in postedChecks) ? postedChecks[check] : 'no_status'
       status = status || 'undefined';
-      progress += `${check.id.padEnd(longestLength, ' ')} | ${mark} | ${status.padEnd(12, ' ')}\n`;
+      progress += `${check.padEnd(longestLength, ' ')} | ${mark} | ${status.padEnd(12, ' ')}\n`;
     });
     progress += "\n\n";
   });
@@ -67,7 +67,7 @@ export const generateProgressDetailsMarkdown = (
     // get the aggregated status of all statuses in the subproject
     let subprojectEmoji: string = "🟢"
     for (const [k, v] of Object.entries(postedChecks)) {
-      if (k in subproject.checks && v !== "success") {
+      if (subproject.checks.includes(k) && v !== "success") {
         subprojectEmoji = "🔴"
         break
       }
@@ -78,10 +78,10 @@ export const generateProgressDetailsMarkdown = (
     progress += "| Check ID | Status |     |\n";
     progress += "| -------- | ------ | --- |\n";
     subproject.checks.forEach((check) => {
-      const mark = statusToMark(check.id, postedChecks);
-      let status = (check.id in postedChecks) ? postedChecks[check.id] : 'no_status'
+      const mark = statusToMark(check, postedChecks);
+      let status = (check in postedChecks) ? postedChecks[check] : 'no_status'
       status = status || 'undefined';
-      progress += `| ${check.id} | ${status} | ${mark} |\n`;
+      progress += `| ${check} | ${status} | ${mark} |\n`;
     });
     progress += "\n</details>\n\n";
   });

@@ -162,10 +162,10 @@ const collectExpectedChecks = (configs: SubProjConfig[]): Record<string, string[
   const requiredChecks: Record<string, string[]> = {};
   configs.forEach((config) => {
     config.checks.forEach((check) => {
-      if (check.id in requiredChecks) {
-        requiredChecks[check.id].push(config.id)
+      if (check in requiredChecks) {
+        requiredChecks[check].push(config.id)
       } else {
-        requiredChecks[check.id] = [config.id]
+        requiredChecks[check] = [config.id]
       }
     });
   });

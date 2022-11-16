@@ -221,11 +221,11 @@ var collectExpectedChecks = function (configs) {
     var requiredChecks = {};
     configs.forEach(function (config) {
         config.checks.forEach(function (check) {
-            if (check.id in requiredChecks) {
-                requiredChecks[check.id].push(config.id);
+            if (check in requiredChecks) {
+                requiredChecks[check].push(config.id);
             }
             else {
-                requiredChecks[check.id] = [config.id];
+                requiredChecks[check] = [config.id];
             }
         });
     });
