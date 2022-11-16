@@ -67,7 +67,7 @@ export const generateProgressDetailsMarkdown = (
     progress += "<details>\n\n"
     const postedChecksValues = Object.values(postedChecks)
     const subprojectEmoji = (postedChecksValues.every(c => c === "success")) ? "🟢" : "🔴"
-    progress += `<summary><b>${subprojectEmoji} ${subproject.id}</b><summary>\n`;
+    progress += `<summary><b>${subprojectEmoji} ${subproject.id}</b></summary>\n\n`;
     progress += "| Check ID | Status |     |\n";
     progress += "| -------- | ------ | --- |\n";
     subproject.checks.forEach((check) => {
@@ -76,7 +76,7 @@ export const generateProgressDetailsMarkdown = (
       status = status || 'undefined';
       progress += `| ${check.id} | ${status} | ${mark} |\n`;
     });
-    progress += "\n</details>\n";
+    progress += "\n</details>\n\n";
   });
   return progress;
 };
