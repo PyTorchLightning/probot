@@ -64,23 +64,22 @@ export const generateProgressDetailsMarkdown = (
 ): string => {
   let progress = "## Groups summary\n";
   subprojects.forEach((subproject) => {
+    // create a map of the relevant checks with their status
+    let subprojectCheckStatus: Record<string, string> = {}
+    subproject.checks.forEach((check) => {
+      let status = (check in postedChecks) ? postedChecks[check] : 'no_status'
+      status = status || 'undefined';
+      subprojectCheckStatus[check] = status
+    });
     // get the aggregated status of all statuses in the subproject
-    let subprojectEmoji: string = "🔴"
-    for (const [k, v] of Object.entries(postedChecks)) {
-      if (subproject.checks.includes(k) && v === "success") {
-        subprojectEmoji = "🟢"
-        break
-      }
-    }
+    const subprojectEmoji: string = Object.values(subprojectCheckStatus).every(v => v === "success") ? "🟢" : "🔴"
     // generate the markdown table
     progress += "<details>\n\n"
     progress += `<summary><b>${subprojectEmoji} ${subproject.id}</b></summary>\n\n`;
     progress += "| Check ID | Status |     |\n";
     progress += "| -------- | ------ | --- |\n";
-    subproject.checks.forEach((check) => {
+    subproject.checks.forEach((check, status) => {
       const mark = statusToMark(check, postedChecks);
-      let status = (check in postedChecks) ? postedChecks[check] : 'no_status'
-      status = status || 'undefined';
       progress += `| ${check} | ${status} | ${mark} |\n`;
     });
     progress += "\n</details>\n\n";

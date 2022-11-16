@@ -88,24 +88,22 @@ exports.generateProgressDetailsCLI = generateProgressDetailsCLI;
 var generateProgressDetailsMarkdown = function (subprojects, postedChecks) {
     var progress = "## Groups summary\n";
     subprojects.forEach(function (subproject) {
+        // create a map of the relevant checks with their status
+        var subprojectCheckStatus = {};
+        subproject.checks.forEach(function (check) {
+            var status = (check in postedChecks) ? postedChecks[check] : 'no_status';
+            status = status || 'undefined';
+            subprojectCheckStatus[check] = status;
+        });
         // get the aggregated status of all statuses in the subproject
-        var subprojectEmoji = "🔴";
-        for (var _i = 0, _a = Object.entries(postedChecks); _i < _a.length; _i++) {
-            var _b = _a[_i], k = _b[0], v = _b[1];
-            if (subproject.checks.includes(k) && v === "success") {
-                subprojectEmoji = "🟢";
-                break;
-            }
-        }
+        var subprojectEmoji = Object.values(subprojectCheckStatus).every(function (v) { return v === "success"; }) ? "🟢" : "🔴";
         // generate the markdown table
         progress += "<details>\n\n";
         progress += "<summary><b>".concat(subprojectEmoji, " ").concat(subproject.id, "</b></summary>\n\n");
         progress += "| Check ID | Status |     |\n";
         progress += "| -------- | ------ | --- |\n";
-        subproject.checks.forEach(function (check) {
+        subproject.checks.forEach(function (check, status) {
             var mark = statusToMark(check, postedChecks);
-            var status = (check in postedChecks) ? postedChecks[check] : 'no_status';
-            status = status || 'undefined';
             progress += "| ".concat(check, " | ").concat(status, " | ").concat(mark, " |\n");
         });
         progress += "\n</details>\n\n";
