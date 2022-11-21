@@ -97,7 +97,7 @@ export const generateProgressDetailsMarkdown = (
       subprojectCheckStatus[check] = status
     });
     // get the aggregated status of all statuses in the subproject
-    let subprojectEmoji: string = "❓"
+    let subprojectEmoji: string = "⌛"
     if (Object.values(subprojectCheckStatus).filter(v => v === "failure").length > 0) {
         subprojectEmoji = "❌";
     } else if (Object.values(subprojectCheckStatus).every(v => v === "success")) {
