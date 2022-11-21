@@ -1,19 +1,19 @@
-import { CheckResult, SubProjConfig } from "../types";
+import { CheckResult, CheckRunData, SubProjConfig } from "../types";
 import { Context } from "probot";
 
 
 const statusToMark = (
   check: string,
-  checksStatusLookup: Record<string, string>,
+  postedChecks: Record<string, CheckRunData>,
 ): string => {
-  if (check in checksStatusLookup) {
-    if (checksStatusLookup[check] === "success") {
+  if (check in postedChecks) {
+    if (postedChecks[check].conclusion === "success") {
       return "✅";
     }
-    if (checksStatusLookup[check] === "failure") {
+    if (postedChecks[check].conclusion === "failure") {
       return "❌";
     }
-    if (checksStatusLookup[check] === "cancelled") {
+    if (postedChecks[check].conclusion === "cancelled") {
       return "🚫";
     }
   } else {
@@ -22,9 +22,21 @@ const statusToMark = (
   return "❓";
 };
 
+const statusToLink = (
+  check: string,
+  postedChecks: Record<string, CheckRunData>,
+): string  => {
+  if (check in postedChecks) {
+    const checkData = postedChecks[check]
+    // assert(checkData.name === check)
+    return `[${check}](${checkData.details_url})`
+  }
+  return check
+}
+
 export const generateProgressDetailsCLI = (
   subprojects: SubProjConfig[],
-  postedChecks: Record<string, string>,
+  postedChecks: Record<string, CheckRunData>,
 ): string => {
   let progress = "";
 
@@ -35,7 +47,7 @@ export const generateProgressDetailsCLI = (
     const longestLength = Math.max(...(subproject.checks.map(check => check.length)));
     subproject.checks.forEach((check) => {
       const mark = statusToMark(check, postedChecks);
-      let status = (check in postedChecks) ? postedChecks[check] : 'no_status'
+      let status = (check in postedChecks) ? postedChecks[check].conclusion : 'no_status'
       status = status || 'undefined';
       progress += `${check.padEnd(longestLength, ' ')} | ${mark} | ${status.padEnd(12, ' ')}\n`;
     });
@@ -50,7 +62,7 @@ export const generateProgressDetailsCLI = (
   }
   for (const availableCheck in postedChecks) {
     const mark = statusToMark(availableCheck, postedChecks);
-    let status = (availableCheck in postedChecks) ? postedChecks[availableCheck] : 'no_status'
+    let status = (availableCheck in postedChecks) ? postedChecks[availableCheck].conclusion : 'no_status'
     status = status || 'undefined';
     progress += `${availableCheck.padEnd(longestLength, ' ')} | ${mark} | ${status.padEnd(12, ' ')}\n`;
   }
@@ -60,15 +72,14 @@ export const generateProgressDetailsCLI = (
 
 export const generateProgressDetailsMarkdown = (
   subprojects: SubProjConfig[],
-  postedChecks: Record<string, string>,
+  postedChecks: Record<string, CheckRunData>,
 ): string => {
   let progress = "## Groups summary\n";
   subprojects.forEach((subproject) => {
     // create a map of the relevant checks with their status
     let subprojectCheckStatus: Record<string, string> = {}
     subproject.checks.forEach((check) => {
-      let status = (check in postedChecks) ? postedChecks[check] : 'no_status'
-      status = status || 'undefined';
+      let status = (check in postedChecks) ? postedChecks[check].conclusion : 'no_status'
       subprojectCheckStatus[check] = status
     });
     // get the aggregated status of all statuses in the subproject
@@ -80,7 +91,8 @@ export const generateProgressDetailsMarkdown = (
     progress += "| -------- | ------ | --- |\n";
     for (const [check, status] of Object.entries(subprojectCheckStatus)) {
       const mark = statusToMark(check, postedChecks);
-      progress += `| ${check} | ${status} | ${mark} |\n`;
+      const link = statusToLink(check, postedChecks);
+      progress += `| ${link} | ${status} | ${mark} |\n`;
     }
     progress += "\n</details>\n\n";
   });
@@ -90,17 +102,17 @@ export const generateProgressDetailsMarkdown = (
 const PR_COMMENT_START = "<!-- checkgroup-comment-start -->";
 
 function formPrComment(
-  conclusion: CheckResult,
+  result: CheckResult,
   inputs: Record<string, any>,
   subprojects: SubProjConfig[],
-  postedChecks: Record<string, string>
+  postedChecks: Record<string, CheckRunData>
 ): string {
-  let parsedConclusion = conclusion.replace("_", " ")
+  let parsedConclusion = result.replace("_", " ")
   // capitalize
   parsedConclusion = parsedConclusion.charAt(0).toUpperCase() + parsedConclusion.slice(1);
-  const hasFailed = conclusion === "has_failure"
-  const conclusionEmoji = (conclusion === "all_passing") ? "🟢": (hasFailed) ? "🔴" : "🟡"
-  const lightning = (conclusion === "all_passing") ? "⚡": (hasFailed) ? "⛈️" : "🌩️"
+  const hasFailed = result === "has_failure"
+  const conclusionEmoji = (result === "all_passing") ? "🟢": (hasFailed) ? "🔴" : "🟡"
+  const lightning = (result === "all_passing") ? "⚡": (hasFailed) ? "⛈️" : "🌩️"
   const failedMesage = (
     `\n**⚠️ This job will need to be re-run to merge your PR.`
     + ` If you do not have write access to the repository you can ask \`${inputs.maintainers}\` to re-run it for you.`
@@ -134,14 +146,14 @@ async function getPrComment(context: Context): Promise<{id: number; body: string
 
 export async function commentOnPr(
   context: Context,
-  conclusion: CheckResult,
+  result: CheckResult,
   inputs: Record<string, any>,
   subprojects: SubProjConfig[],
-  postedChecks: Record<string, string>,
+  postedChecks: Record<string, CheckRunData>,
 ) {
   const existingData = await getPrComment(context);
   context.log.debug(`existingData: ${JSON.stringify(existingData)}`)
-  const newComment = formPrComment(conclusion, inputs, subprojects, postedChecks);
+  const newComment = formPrComment(result, inputs, subprojects, postedChecks);
   if (existingData.body === newComment) {
     return;
   }

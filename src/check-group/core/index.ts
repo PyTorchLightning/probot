@@ -6,6 +6,7 @@
   generateProgressDetailsCLI,
   commentOnPr,
 } from "./generate_progress";
+import { CheckRunData } from '../types';
 import { matchFilenamesToSubprojects } from "./subproj_matching";
 import { satisfyExpectedChecks } from "./satisfy_expected_checks";
 import { fetchConfig } from "./config_getter";
@@ -83,11 +84,11 @@ export class CheckGroup {
       core.startGroup(`Check ${tries}`);
       const postedChecks = await getPostedChecks(this.context, this.sha);
       core.debug(`postedChecks: ${JSON.stringify(postedChecks)}`);
-      const conclusion = satisfyExpectedChecks(subprojs, postedChecks);
-      this.notifyProgress(subprojs, postedChecks, conclusion)
+      const result = satisfyExpectedChecks(subprojs, postedChecks);
+      this.notifyProgress(subprojs, postedChecks, result)
       core.endGroup();
     
-      if (conclusion === "all_passing") {
+      if (result === "all_passing") {
         core.info("All required checks were successful!")
         clearTimeout(this.intervalTimer)
         clearTimeout(this.timeoutTimer)
@@ -105,14 +106,14 @@ export class CheckGroup {
 
   async notifyProgress(
     subprojs: SubProjConfig[],
-    postedChecks: Record<string, string>,
-    conclusion: CheckResult
+    postedChecks: Record<string, CheckRunData>,
+    result: CheckResult
   ): Promise<void> {
     const details = generateProgressDetailsCLI(subprojs, postedChecks)
     core.info(
-      `${this.config.customServiceName} conclusion: '${conclusion}':\n${details}`
+      `${this.config.customServiceName} result: '${result}':\n${details}`
     )
-    commentOnPr(this.context, conclusion, this.inputs, subprojs, postedChecks)
+    commentOnPr(this.context, result, this.inputs, subprojs, postedChecks)
   } 
 
   /**
@@ -140,18 +141,23 @@ export {fetchConfig};
  * Fetches a list of already finished
  * checks.
  */
-const getPostedChecks = async (context: Context, sha: string): Promise<Record<string, string>> => {
+const getPostedChecks = async (context: Context, sha: string): Promise<Record<string, CheckRunData>> => {
   const checkRuns = await context.octokit.paginate(
     context.octokit.checks.listForRef,
     context.repo({ref: sha}),
     (response) => response.data,
   );
   core.debug(`checkRuns: ${JSON.stringify(checkRuns)}`)
-  const checkNames: Record<string, string> = {};
+  const checkNames: Record<string, CheckRunData> = {};
   checkRuns.forEach(
-    (checkRun: any) => {
-      const conclusion = checkRun.conclusion ? checkRun.conclusion : "pending";
-      checkNames[checkRun.name] = conclusion;
+    (checkRun) => {
+      const checkRunData: CheckRunData = {
+        name: checkRun.name,
+        status: checkRun.status,
+        conclusion: checkRun.conclusion,
+        details_url: checkRun.details_url
+      }
+      checkNames[checkRun.name] = checkRunData;
     },
   );
   return checkNames;

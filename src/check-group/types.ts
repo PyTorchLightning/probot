@@ -40,9 +40,12 @@ export interface CheckGroupConfig {
  * The result of the processing pipeline.
  */
 export type CheckResult = 'all_passing' | 'has_failure' | 'pending';
+export type Conclusion =  "success" | "failure" | "neutral" | "cancelled" | "skipped" | "timed_out" | "action_required" | null;
+export type Status = "completed" | "in_progress" | "queued";
 
 export interface CheckRunData {
   name: string;
-  status: string;
-  conclusion: string | undefined;
+  status: Status;
+  conclusion: Conclusion;
+  details_url: string;
 }

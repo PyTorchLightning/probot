@@ -124,7 +124,7 @@ var CheckGroup = /** @class */ (function () {
     };
     CheckGroup.prototype.runCheck = function (subprojs, tries, interval) {
         return __awaiter(this, void 0, void 0, function () {
-            var postedChecks, conclusion, error_1;
+            var postedChecks, result, error_1;
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -136,10 +136,10 @@ var CheckGroup = /** @class */ (function () {
                     case 1:
                         postedChecks = _a.sent();
                         core.debug("postedChecks: ".concat(JSON.stringify(postedChecks)));
-                        conclusion = (0, satisfy_expected_checks_1.satisfyExpectedChecks)(subprojs, postedChecks);
-                        this.notifyProgress(subprojs, postedChecks, conclusion);
+                        result = (0, satisfy_expected_checks_1.satisfyExpectedChecks)(subprojs, postedChecks);
+                        this.notifyProgress(subprojs, postedChecks, result);
                         core.endGroup();
-                        if (conclusion === "all_passing") {
+                        if (result === "all_passing") {
                             core.info("All required checks were successful!");
                             clearTimeout(this.intervalTimer);
                             clearTimeout(this.timeoutTimer);
@@ -160,13 +160,13 @@ var CheckGroup = /** @class */ (function () {
             });
         });
     };
-    CheckGroup.prototype.notifyProgress = function (subprojs, postedChecks, conclusion) {
+    CheckGroup.prototype.notifyProgress = function (subprojs, postedChecks, result) {
         return __awaiter(this, void 0, void 0, function () {
             var details;
             return __generator(this, function (_a) {
                 details = (0, generate_progress_1.generateProgressDetailsCLI)(subprojs, postedChecks);
-                core.info("".concat(this.config.customServiceName, " conclusion: '").concat(conclusion, "':\n").concat(details));
-                (0, generate_progress_1.commentOnPr)(this.context, conclusion, this.inputs, subprojs, postedChecks);
+                core.info("".concat(this.config.customServiceName, " result: '").concat(result, "':\n").concat(details));
+                (0, generate_progress_1.commentOnPr)(this.context, result, this.inputs, subprojs, postedChecks);
                 return [2 /*return*/];
             });
         });
@@ -209,8 +209,13 @@ var getPostedChecks = function (context, sha) { return __awaiter(void 0, void 0,
                 core.debug("checkRuns: ".concat(JSON.stringify(checkRuns)));
                 checkNames = {};
                 checkRuns.forEach(function (checkRun) {
-                    var conclusion = checkRun.conclusion ? checkRun.conclusion : "pending";
-                    checkNames[checkRun.name] = conclusion;
+                    var checkRunData = {
+                        name: checkRun.name,
+                        status: checkRun.status,
+                        conclusion: checkRun.conclusion,
+                        details_url: checkRun.details_url
+                    };
+                    checkNames[checkRun.name] = checkRunData;
                 });
                 return [2 /*return*/, checkNames];
         }

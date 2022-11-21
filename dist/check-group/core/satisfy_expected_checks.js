@@ -12,7 +12,7 @@ exports.satisfyExpectedChecks = void 0;
  * posted progresses. The key is the check ID and the value
  * is the current check status.
  *
- * @returns The current status of checks fulfillment.
+ * @returns The current result of checks fulfillment.
  * * "all_passing" means all required checks post
  *   success conclusion.
  * * "has_failure" means at least one of the required
@@ -20,22 +20,20 @@ exports.satisfyExpectedChecks = void 0;
  * * "pending" means there is no failure but some
  *   checks are pending or missing.
  */
-var satisfyExpectedChecks = function (subProjs, checksStatusLookup) {
+var satisfyExpectedChecks = function (subProjs, postedChecks) {
     var result = "all_passing";
     subProjs.forEach(function (subProj) {
         subProj.checks.forEach(function (check) {
-            /* eslint-disable security/detect-object-injection */
-            if (check in checksStatusLookup &&
-                checksStatusLookup[check] !== "success" &&
-                checksStatusLookup[check] !== "pending") {
+            if (check in postedChecks &&
+                postedChecks[check].conclusion !== "success" &&
+                postedChecks[check].conclusion !== null) {
                 result = "has_failure";
             }
-            if ((!(check in checksStatusLookup) ||
-                checksStatusLookup[check] === "pending") &&
+            if ((!(check in postedChecks) ||
+                postedChecks[check].conclusion === null) &&
                 result !== "has_failure") {
                 result = "pending";
             }
-            /* eslint-enable security/detect-object-injection */
         });
     });
     return result;

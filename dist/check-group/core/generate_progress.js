@@ -37,15 +37,15 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.commentOnPr = exports.generateProgressDetailsMarkdown = exports.generateProgressDetailsCLI = void 0;
-var statusToMark = function (check, checksStatusLookup) {
-    if (check in checksStatusLookup) {
-        if (checksStatusLookup[check] === "success") {
+var statusToMark = function (check, postedChecks) {
+    if (check in postedChecks) {
+        if (postedChecks[check].conclusion === "success") {
             return "✅";
         }
-        if (checksStatusLookup[check] === "failure") {
+        if (postedChecks[check].conclusion === "failure") {
             return "❌";
         }
-        if (checksStatusLookup[check] === "cancelled") {
+        if (postedChecks[check].conclusion === "cancelled") {
             return "🚫";
         }
     }
@@ -53,6 +53,14 @@ var statusToMark = function (check, checksStatusLookup) {
         return "⌛";
     }
     return "❓";
+};
+var statusToLink = function (check, postedChecks) {
+    if (check in postedChecks) {
+        var checkData = postedChecks[check];
+        // assert(checkData.name === check)
+        return "[".concat(check, "](").concat(checkData.details_url, ")");
+    }
+    return check;
 };
 var generateProgressDetailsCLI = function (subprojects, postedChecks) {
     var progress = "";
@@ -63,7 +71,7 @@ var generateProgressDetailsCLI = function (subprojects, postedChecks) {
         var longestLength = Math.max.apply(Math, (subproject.checks.map(function (check) { return check.length; })));
         subproject.checks.forEach(function (check) {
             var mark = statusToMark(check, postedChecks);
-            var status = (check in postedChecks) ? postedChecks[check] : 'no_status';
+            var status = (check in postedChecks) ? postedChecks[check].conclusion : 'no_status';
             status = status || 'undefined';
             progress += "".concat(check.padEnd(longestLength, ' '), " | ").concat(mark, " | ").concat(status.padEnd(12, ' '), "\n");
         });
@@ -77,7 +85,7 @@ var generateProgressDetailsCLI = function (subprojects, postedChecks) {
     }
     for (var availableCheck in postedChecks) {
         var mark = statusToMark(availableCheck, postedChecks);
-        var status_1 = (availableCheck in postedChecks) ? postedChecks[availableCheck] : 'no_status';
+        var status_1 = (availableCheck in postedChecks) ? postedChecks[availableCheck].conclusion : 'no_status';
         status_1 = status_1 || 'undefined';
         progress += "".concat(availableCheck.padEnd(longestLength, ' '), " | ").concat(mark, " | ").concat(status_1.padEnd(12, ' '), "\n");
     }
@@ -91,8 +99,7 @@ var generateProgressDetailsMarkdown = function (subprojects, postedChecks) {
         // create a map of the relevant checks with their status
         var subprojectCheckStatus = {};
         subproject.checks.forEach(function (check) {
-            var status = (check in postedChecks) ? postedChecks[check] : 'no_status';
-            status = status || 'undefined';
+            var status = (check in postedChecks) ? postedChecks[check].conclusion : 'no_status';
             subprojectCheckStatus[check] = status;
         });
         // get the aggregated status of all statuses in the subproject
@@ -105,7 +112,8 @@ var generateProgressDetailsMarkdown = function (subprojects, postedChecks) {
         for (var _i = 0, _a = Object.entries(subprojectCheckStatus); _i < _a.length; _i++) {
             var _b = _a[_i], check = _b[0], status_2 = _b[1];
             var mark = statusToMark(check, postedChecks);
-            progress += "| ".concat(check, " | ").concat(status_2, " | ").concat(mark, " |\n");
+            var link = statusToLink(check, postedChecks);
+            progress += "| ".concat(link, " | ").concat(status_2, " | ").concat(mark, " |\n");
         }
         progress += "\n</details>\n\n";
     });
@@ -113,13 +121,13 @@ var generateProgressDetailsMarkdown = function (subprojects, postedChecks) {
 };
 exports.generateProgressDetailsMarkdown = generateProgressDetailsMarkdown;
 var PR_COMMENT_START = "<!-- checkgroup-comment-start -->";
-function formPrComment(conclusion, inputs, subprojects, postedChecks) {
-    var parsedConclusion = conclusion.replace("_", " ");
+function formPrComment(result, inputs, subprojects, postedChecks) {
+    var parsedConclusion = result.replace("_", " ");
     // capitalize
     parsedConclusion = parsedConclusion.charAt(0).toUpperCase() + parsedConclusion.slice(1);
-    var hasFailed = conclusion === "has_failure";
-    var conclusionEmoji = (conclusion === "all_passing") ? "🟢" : (hasFailed) ? "🔴" : "🟡";
-    var lightning = (conclusion === "all_passing") ? "⚡" : (hasFailed) ? "⛈️" : "🌩️";
+    var hasFailed = result === "has_failure";
+    var conclusionEmoji = (result === "all_passing") ? "🟢" : (hasFailed) ? "🔴" : "🟡";
+    var lightning = (result === "all_passing") ? "⚡" : (hasFailed) ? "⛈️" : "🌩️";
     var failedMesage = ("\n**\u26A0\uFE0F This job will need to be re-run to merge your PR."
         + " If you do not have write access to the repository you can ask `".concat(inputs.maintainers, "` to re-run it for you.")
         + " If you push a new commit, all of CI will re-trigger ⚠️**"
@@ -155,7 +163,7 @@ function getPrComment(context) {
         });
     });
 }
-function commentOnPr(context, conclusion, inputs, subprojects, postedChecks) {
+function commentOnPr(context, result, inputs, subprojects, postedChecks) {
     return __awaiter(this, void 0, void 0, function () {
         var existingData, newComment;
         return __generator(this, function (_a) {
@@ -164,7 +172,7 @@ function commentOnPr(context, conclusion, inputs, subprojects, postedChecks) {
                 case 1:
                     existingData = _a.sent();
                     context.log.debug("existingData: ".concat(JSON.stringify(existingData)));
-                    newComment = formPrComment(conclusion, inputs, subprojects, postedChecks);
+                    newComment = formPrComment(result, inputs, subprojects, postedChecks);
                     if (existingData.body === newComment) {
                         return [2 /*return*/];
                     }
