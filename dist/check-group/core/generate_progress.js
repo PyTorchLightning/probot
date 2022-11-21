@@ -48,9 +48,9 @@ var statusToMark = function (check, postedChecks) {
         if (postedChecks[check].conclusion === "cancelled") {
             return "🚫";
         }
-    }
-    else {
-        return "⌛";
+        if (postedChecks[check].conclusion === null) {
+            return "⌛"; // pending
+        }
     }
     return "❓";
 };
@@ -62,6 +62,18 @@ var statusToLink = function (check, postedChecks) {
     }
     return check;
 };
+var parseStatus = function (check, postedChecks) {
+    if (check in postedChecks) {
+        var checkData = postedChecks[check];
+        if (checkData.conclusion === null) {
+            return checkData.status;
+        }
+        else {
+            return checkData.conclusion;
+        }
+    }
+    return "no_status";
+};
 var generateProgressDetailsCLI = function (subprojects, postedChecks) {
     var progress = "";
     // these are the required subprojects
@@ -71,8 +83,7 @@ var generateProgressDetailsCLI = function (subprojects, postedChecks) {
         var longestLength = Math.max.apply(Math, (subproject.checks.map(function (check) { return check.length; })));
         subproject.checks.forEach(function (check) {
             var mark = statusToMark(check, postedChecks);
-            var status = (check in postedChecks) ? postedChecks[check].conclusion : 'no_status';
-            status = status || 'undefined';
+            var status = parseStatus(check, postedChecks);
             progress += "".concat(check.padEnd(longestLength, ' '), " | ").concat(mark, " | ").concat(status.padEnd(12, ' '), "\n");
         });
         progress += "\n\n";
@@ -85,8 +96,7 @@ var generateProgressDetailsCLI = function (subprojects, postedChecks) {
     }
     for (var availableCheck in postedChecks) {
         var mark = statusToMark(availableCheck, postedChecks);
-        var status_1 = (availableCheck in postedChecks) ? postedChecks[availableCheck].conclusion : 'no_status';
-        status_1 = status_1 || 'undefined';
+        var status_1 = parseStatus(availableCheck, postedChecks);
         progress += "".concat(availableCheck.padEnd(longestLength, ' '), " | ").concat(mark, " | ").concat(status_1.padEnd(12, ' '), "\n");
     }
     progress += "\n";
@@ -111,9 +121,10 @@ var generateProgressDetailsMarkdown = function (subprojects, postedChecks) {
         progress += "| -------- | ------ | --- |\n";
         for (var _i = 0, _a = Object.entries(subprojectCheckStatus); _i < _a.length; _i++) {
             var _b = _a[_i], check = _b[0], status_2 = _b[1];
-            var mark = statusToMark(check, postedChecks);
             var link = statusToLink(check, postedChecks);
-            progress += "| ".concat(link, " | ").concat(status_2, " | ").concat(mark, " |\n");
+            var status_3 = parseStatus(check, postedChecks);
+            var mark = statusToMark(check, postedChecks);
+            progress += "| ".concat(link, " | ").concat(status_3, " | ").concat(mark, " |\n");
         }
         progress += "\n</details>\n\n";
     });

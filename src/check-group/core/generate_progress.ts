@@ -16,8 +16,9 @@ const statusToMark = (
     if (postedChecks[check].conclusion === "cancelled") {
       return "🚫";
     }
-  } else {
-    return "⌛";
+    if (postedChecks[check].conclusion === null) {
+      return "⌛";  // pending
+    }
   }
   return "❓";
 };
@@ -34,6 +35,21 @@ const statusToLink = (
   return check
 }
 
+const parseStatus = (
+  check: string,
+  postedChecks: Record<string, CheckRunData>,
+): string  => {
+  if (check in postedChecks) {
+    const checkData = postedChecks[check]
+    if (checkData.conclusion === null) {
+      return checkData.status        
+    } else {
+      return checkData.conclusion
+    }
+  }
+  return "no_status"
+}
+
 export const generateProgressDetailsCLI = (
   subprojects: SubProjConfig[],
   postedChecks: Record<string, CheckRunData>,
@@ -47,8 +63,7 @@ export const generateProgressDetailsCLI = (
     const longestLength = Math.max(...(subproject.checks.map(check => check.length)));
     subproject.checks.forEach((check) => {
       const mark = statusToMark(check, postedChecks);
-      let status = (check in postedChecks) ? postedChecks[check].conclusion : 'no_status'
-      status = status || 'undefined';
+      const status = parseStatus(check, postedChecks);
       progress += `${check.padEnd(longestLength, ' ')} | ${mark} | ${status.padEnd(12, ' ')}\n`;
     });
     progress += "\n\n";
@@ -62,8 +77,7 @@ export const generateProgressDetailsCLI = (
   }
   for (const availableCheck in postedChecks) {
     const mark = statusToMark(availableCheck, postedChecks);
-    let status = (availableCheck in postedChecks) ? postedChecks[availableCheck].conclusion : 'no_status'
-    status = status || 'undefined';
+    const status = parseStatus(availableCheck, postedChecks);
     progress += `${availableCheck.padEnd(longestLength, ' ')} | ${mark} | ${status.padEnd(12, ' ')}\n`;
   }
   progress += "\n";
@@ -90,8 +104,9 @@ export const generateProgressDetailsMarkdown = (
     progress += "| Check ID | Status |     |\n";
     progress += "| -------- | ------ | --- |\n";
     for (const [check, status] of Object.entries(subprojectCheckStatus)) {
-      const mark = statusToMark(check, postedChecks);
       const link = statusToLink(check, postedChecks);
+      const status = parseStatus(check, postedChecks);
+      const mark = statusToMark(check, postedChecks);
       progress += `| ${link} | ${status} | ${mark} |\n`;
     }
     progress += "\n</details>\n\n";
