@@ -97,7 +97,12 @@ export const generateProgressDetailsMarkdown = (
       subprojectCheckStatus[check] = status
     });
     // get the aggregated status of all statuses in the subproject
-    const subprojectEmoji: string = Object.values(subprojectCheckStatus).every(v => v === "success") ? "🟢" : "🔴"
+    let subprojectEmoji: string = "❓"
+    if (Object.values(subprojectCheckStatus).filter(v => v === "failure").length > 0) {
+        subprojectEmoji = "❌";
+    } else if (Object.values(subprojectCheckStatus).every(v => v === "success")) {
+        subprojectEmoji = "✅";
+    }
     // generate the markdown table
     progress += "<details>\n\n"
     progress += `<summary><b>${subprojectEmoji} ${subproject.id}</b></summary>\n\n`;
