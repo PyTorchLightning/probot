@@ -5,7 +5,7 @@ export const getChecksResult = (
   postedChecks: Record<string, CheckRunData>,
 ): CheckResult => {
   let result: CheckResult = "all_passing";
-  checks.forEach((check) => {
+  for (const check of checks) {
     const relevant = check in postedChecks
     if (relevant && postedChecks[check].conclusion !== "success") {
       // at least one check failed
@@ -15,7 +15,7 @@ export const getChecksResult = (
       // some checks are pending or missing
       result = "pending";
     }
-  });
+  };
   return result;
 }
 
@@ -24,19 +24,18 @@ export const getSubProjResult = (
   postedChecks: Record<string, CheckRunData>,
 ): CheckResult => {
   let result: CheckResult = "all_passing";
-  subProjs.forEach((subProj) => {
-    subProj.checks.forEach((check) => {
+  for (const subProj of subProjs) {
+    for (const check of subProj.checks) {
       const relevant = check in postedChecks
       if (relevant && postedChecks[check].conclusion !== "success") {
         // at least one check failed
-        result = "has_failure";
-        return // continue
+        return "has_failure";
       }
       if (!relevant || postedChecks[check].conclusion === null) {
         // some checks are pending or missing
         result = "pending";
       }
-    });
-  });
+    };
+  };
   return result;
 };
