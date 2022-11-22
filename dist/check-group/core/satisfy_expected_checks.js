@@ -5,13 +5,19 @@ var getChecksResult = function (checks, postedChecks) {
     var result = "all_passing";
     for (var _i = 0, checks_1 = checks; _i < checks_1.length; _i++) {
         var check = checks_1[_i];
-        var relevant = check in postedChecks;
-        if (relevant && postedChecks[check].conclusion !== "success") {
-            // at least one check failed
-            return "has_failure";
+        if (check in postedChecks) {
+            var conclusion = postedChecks[check].conclusion;
+            if (conclusion === null) {
+                // the check is in progress
+                result = "pending";
+            }
+            else if (conclusion !== "success") {
+                // the check already failed
+                return "has_failure";
+            }
         }
-        if (!relevant || postedChecks[check].conclusion === null) {
-            // some checks are pending or missing
+        else {
+            // the check is missing, hopefully queued
             result = "pending";
         }
     }
@@ -25,13 +31,19 @@ var getSubProjResult = function (subProjs, postedChecks) {
         var subProj = subProjs_1[_i];
         for (var _a = 0, _b = subProj.checks; _a < _b.length; _a++) {
             var check = _b[_a];
-            var relevant = check in postedChecks;
-            if (relevant && postedChecks[check].conclusion !== "success") {
-                // at least one check failed
-                return "has_failure";
+            if (check in postedChecks) {
+                var conclusion = postedChecks[check].conclusion;
+                if (conclusion === null) {
+                    // the check is in progress
+                    result = "pending";
+                }
+                else if (conclusion !== "success") {
+                    // the check already failed
+                    return "has_failure";
+                }
             }
-            if (!relevant || postedChecks[check].conclusion === null) {
-                // some checks are pending or missing
+            else {
+                // the check is missing, hopefully queued
                 result = "pending";
             }
         }
