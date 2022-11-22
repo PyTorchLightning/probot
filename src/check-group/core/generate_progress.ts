@@ -1,5 +1,6 @@
 import { CheckResult, CheckRunData, SubProjConfig } from "../types";
 import { Context } from "probot";
+import { getCheckResult } from "./satisfy_expected_checks";
 
 
 const statusToMark = (
@@ -90,30 +91,27 @@ export const generateProgressDetailsMarkdown = (
 ): string => {
   let progress = "## Groups summary\n";
   subprojects.forEach((subproject) => {
-    // create a map of the relevant checks with their status
-    let subprojectCheckStatus: Record<string, string> = {}
-    subproject.checks.forEach((check) => {
-      let status = (check in postedChecks) ? postedChecks[check].conclusion : 'no_status'
-      subprojectCheckStatus[check] = status
-    });
     // get the aggregated status of all statuses in the subproject
-    let subprojectEmoji: string = "⌛"
-    if (Object.values(subprojectCheckStatus).filter(v => v === "failure").length > 0) {
-        subprojectEmoji = "❌";
-    } else if (Object.values(subprojectCheckStatus).every(v => v === "success")) {
-        subprojectEmoji = "✅";
+    const checkResult = getCheckResult(subproject.checks, postedChecks)
+    let subprojectEmoji: string;
+    if (checkResult === "all_passing") {
+      subprojectEmoji = "🟢";
+    } else if (checkResult === "has_failure") {
+      subprojectEmoji = "🔴";
+    } else {
+      subprojectEmoji = "🟡";
     }
     // generate the markdown table
     progress += "<details>\n\n"
     progress += `<summary><b>${subprojectEmoji} ${subproject.id}</b></summary>\n\n`;
     progress += "| Check ID | Status |     |\n";
     progress += "| -------- | ------ | --- |\n";
-    for (const [check, status] of Object.entries(subprojectCheckStatus)) {
+    subproject.checks.forEach((check) => {
       const link = statusToLink(check, postedChecks);
       const status = parseStatus(check, postedChecks);
       const mark = statusToMark(check, postedChecks);
       progress += `| ${link} | ${status} | ${mark} |\n`;
-    }
+    })
     progress += "\n</details>\n\n";
   });
   return progress;
