@@ -37,6 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.commentOnPr = exports.generateProgressDetailsMarkdown = exports.generateProgressDetailsCLI = void 0;
+var satisfy_expected_checks_1 = require("./satisfy_expected_checks");
 var statusToMark = function (check, postedChecks) {
     if (check in postedChecks) {
         if (postedChecks[check].conclusion === "success") {
@@ -106,26 +107,29 @@ exports.generateProgressDetailsCLI = generateProgressDetailsCLI;
 var generateProgressDetailsMarkdown = function (subprojects, postedChecks) {
     var progress = "## Groups summary\n";
     subprojects.forEach(function (subproject) {
-        // create a map of the relevant checks with their status
-        var subprojectCheckStatus = {};
-        subproject.checks.forEach(function (check) {
-            var status = (check in postedChecks) ? postedChecks[check].conclusion : 'no_status';
-            subprojectCheckStatus[check] = status;
-        });
         // get the aggregated status of all statuses in the subproject
-        var subprojectEmoji = Object.values(subprojectCheckStatus).every(function (v) { return v === "success"; }) ? "🟢" : "🔴";
+        var checkResult = (0, satisfy_expected_checks_1.getCheckResult)(subproject.checks, postedChecks);
+        var subprojectEmoji;
+        if (checkResult === "all_passing") {
+            subprojectEmoji = "🟢";
+        }
+        else if (checkResult === "has_failure") {
+            subprojectEmoji = "🔴";
+        }
+        else {
+            subprojectEmoji = "🟡";
+        }
         // generate the markdown table
         progress += "<details>\n\n";
         progress += "<summary><b>".concat(subprojectEmoji, " ").concat(subproject.id, "</b></summary>\n\n");
         progress += "| Check ID | Status |     |\n";
         progress += "| -------- | ------ | --- |\n";
-        for (var _i = 0, _a = Object.entries(subprojectCheckStatus); _i < _a.length; _i++) {
-            var _b = _a[_i], check = _b[0], status_2 = _b[1];
+        subproject.checks.forEach(function (check) {
             var link = statusToLink(check, postedChecks);
-            var status_3 = parseStatus(check, postedChecks);
+            var status = parseStatus(check, postedChecks);
             var mark = statusToMark(check, postedChecks);
-            progress += "| ".concat(link, " | ").concat(status_3, " | ").concat(mark, " |\n");
-        }
+            progress += "| ".concat(link, " | ").concat(status, " | ").concat(mark, " |\n");
+        });
         progress += "\n</details>\n\n";
     });
     return progress;
