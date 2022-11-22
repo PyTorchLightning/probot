@@ -1,6 +1,6 @@
 import { CheckResult, CheckRunData, SubProjConfig } from "../types";
 import { Context } from "probot";
-import { getCheckResult } from "./satisfy_expected_checks";
+import { getChecksResult } from "./satisfy_expected_checks";
 
 
 const statusToMark = (
@@ -92,14 +92,12 @@ export const generateProgressDetailsMarkdown = (
   let progress = "## Groups summary\n";
   subprojects.forEach((subproject) => {
     // get the aggregated status of all statuses in the subproject
-    const checkResult = getCheckResult(subproject.checks, postedChecks)
-    let subprojectEmoji: string;
+    const checkResult = getChecksResult(subproject.checks, postedChecks)
+    let subprojectEmoji = "🟡";
     if (checkResult === "all_passing") {
       subprojectEmoji = "🟢";
     } else if (checkResult === "has_failure") {
       subprojectEmoji = "🔴";
-    } else {
-      subprojectEmoji = "🟡";
     }
     // generate the markdown table
     progress += "<details>\n\n"

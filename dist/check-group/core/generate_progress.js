@@ -108,16 +108,13 @@ var generateProgressDetailsMarkdown = function (subprojects, postedChecks) {
     var progress = "## Groups summary\n";
     subprojects.forEach(function (subproject) {
         // get the aggregated status of all statuses in the subproject
-        var checkResult = (0, satisfy_expected_checks_1.getCheckResult)(subproject.checks, postedChecks);
-        var subprojectEmoji;
+        var checkResult = (0, satisfy_expected_checks_1.getChecksResult)(subproject.checks, postedChecks);
+        var subprojectEmoji = "🟡";
         if (checkResult === "all_passing") {
             subprojectEmoji = "🟢";
         }
         else if (checkResult === "has_failure") {
             subprojectEmoji = "🔴";
-        }
-        else {
-            subprojectEmoji = "🟡";
         }
         // generate the markdown table
         progress += "<details>\n\n";

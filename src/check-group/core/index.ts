@@ -8,7 +8,7 @@
 } from "./generate_progress";
 import { CheckRunData } from '../types';
 import { matchFilenamesToSubprojects } from "./subproj_matching";
-import { satisfyExpectedChecks } from "./satisfy_expected_checks";
+import { getSubProjResult } from "./satisfy_expected_checks";
 import { fetchConfig } from "./config_getter";
 import type { CheckGroupConfig, CheckResult, SubProjConfig } from "../types";
 import type { Context } from "probot";
@@ -84,7 +84,7 @@ export class CheckGroup {
       core.startGroup(`Check ${tries}`);
       const postedChecks = await getPostedChecks(this.context, this.sha);
       core.debug(`postedChecks: ${JSON.stringify(postedChecks)}`);
-      const result = satisfyExpectedChecks(subprojs, postedChecks);
+      const result = getSubProjResult(subprojs, postedChecks);
       this.notifyProgress(subprojs, postedChecks, result)
       core.endGroup();
     

@@ -136,7 +136,7 @@ var CheckGroup = /** @class */ (function () {
                     case 1:
                         postedChecks = _a.sent();
                         core.debug("postedChecks: ".concat(JSON.stringify(postedChecks)));
-                        result = (0, satisfy_expected_checks_1.satisfyExpectedChecks)(subprojs, postedChecks);
+                        result = (0, satisfy_expected_checks_1.getSubProjResult)(subprojs, postedChecks);
                         this.notifyProgress(subprojs, postedChecks, result);
                         core.endGroup();
                         if (result === "all_passing") {
