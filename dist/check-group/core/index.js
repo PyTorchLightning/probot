@@ -163,26 +163,31 @@ var CheckGroup = /** @class */ (function () {
     };
     CheckGroup.prototype.notifyProgress = function (subprojs, postedChecks, result) {
         return __awaiter(this, void 0, void 0, function () {
-            var details;
+            var details, e_1;
             return __generator(this, function (_a) {
-                details = (0, generate_progress_1.generateProgressDetailsCLI)(subprojs, postedChecks);
-                core.info("".concat(this.config.customServiceName, " result: '").concat(result, "':\n").concat(details));
-                try {
-                    (0, generate_progress_1.commentOnPr)(this.context, result, this.inputs, subprojs, postedChecks);
+                switch (_a.label) {
+                    case 0:
+                        details = (0, generate_progress_1.generateProgressDetailsCLI)(subprojs, postedChecks);
+                        core.info("".concat(this.config.customServiceName, " result: '").concat(result, "':\n").concat(details));
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 3, , 4]);
+                        return [4 /*yield*/, (0, generate_progress_1.commentOnPr)(this.context, result, this.inputs, subprojs, postedChecks)];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 4];
+                    case 3:
+                        e_1 = _a.sent();
+                        if (e_1 instanceof request_error_1.RequestError && e_1.status === 403) {
+                            // Forbidden: Resource not accessible by integration
+                            core.info("Failed to comment on the PR: ".concat(JSON.stringify(e_1)));
+                        }
+                        else {
+                            throw e_1;
+                        }
+                        return [3 /*break*/, 4];
+                    case 4: return [2 /*return*/];
                 }
-                catch (e) {
-                    core.info((e instanceof request_error_1.RequestError).toString());
-                    core.info((e.status === 403).toString());
-                    core.info(typeof e);
-                    if (e instanceof request_error_1.RequestError && e.status === 403) {
-                        // Forbidden: Resource not accessible by integration
-                        core.info("Failed to comment on the PR: ".concat(JSON.stringify(e)));
-                    }
-                    else {
-                        throw e;
-                    }
-                }
-                return [2 /*return*/];
             });
         });
     };
