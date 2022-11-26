@@ -12,6 +12,7 @@ import { getSubProjResult } from "./satisfy_expected_checks";
 import { fetchConfig } from "./config_getter";
 import type { CheckGroupConfig, CheckResult, SubProjConfig } from "../types";
 import type { Context } from "probot";
+import { RequestError } from "@octokit/request-error";
 
 /**
  * The orchestration class.
@@ -113,7 +114,16 @@ export class CheckGroup {
     core.info(
       `${this.config.customServiceName} result: '${result}':\n${details}`
     )
-    commentOnPr(this.context, result, this.inputs, subprojs, postedChecks)
+    try {
+      commentOnPr(this.context, result, this.inputs, subprojs, postedChecks)
+    } catch (e) {
+      if (e instanceof RequestError && e.status === 403) {
+        // Forbidden: Resource not accessible by integration
+        core.info(`Failed to comment on the PR: ${JSON.stringify(e)}`)
+      } else {
+        throw e
+      }
+    }
   } 
 
   /**

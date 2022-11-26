@@ -69,6 +69,7 @@ var subproj_matching_1 = require("./subproj_matching");
 var satisfy_expected_checks_1 = require("./satisfy_expected_checks");
 var config_getter_1 = require("./config_getter");
 Object.defineProperty(exports, "fetchConfig", { enumerable: true, get: function () { return config_getter_1.fetchConfig; } });
+var request_error_1 = require("@octokit/request-error");
 /**
  * The orchestration class.
  */
@@ -166,7 +167,18 @@ var CheckGroup = /** @class */ (function () {
             return __generator(this, function (_a) {
                 details = (0, generate_progress_1.generateProgressDetailsCLI)(subprojs, postedChecks);
                 core.info("".concat(this.config.customServiceName, " result: '").concat(result, "':\n").concat(details));
-                (0, generate_progress_1.commentOnPr)(this.context, result, this.inputs, subprojs, postedChecks);
+                try {
+                    (0, generate_progress_1.commentOnPr)(this.context, result, this.inputs, subprojs, postedChecks);
+                }
+                catch (e) {
+                    if (e instanceof request_error_1.RequestError && e.status === 403) {
+                        // Forbidden: Resource not accessible by integration
+                        core.info("Failed to comment on the PR: ".concat(JSON.stringify(e)));
+                    }
+                    else {
+                        throw e;
+                    }
+                }
                 return [2 /*return*/];
             });
         });

@@ -127,6 +127,7 @@ var generateProgressDetailsMarkdown = function (subprojects, postedChecks) {
             var mark = statusToMark(check, postedChecks);
             progress += "| ".concat(link, " | ").concat(status, " | ").concat(mark, " |\n");
         });
+        progress += "\nThese checks are required after the changes to `".concat(subproject.paths.join("`, `"), "`.\n");
         progress += "\n</details>\n\n";
     });
     return progress;
@@ -140,19 +141,18 @@ function formPrComment(result, inputs, subprojects, postedChecks) {
     var hasFailed = result === "has_failure";
     var conclusionEmoji = (result === "all_passing") ? "🟢" : (hasFailed) ? "🔴" : "🟡";
     var lightning = (result === "all_passing") ? "⚡" : (hasFailed) ? "⛈️" : "🌩️";
-    var failedMesage = ("\n**\u26A0\uFE0F This job will need to be re-run to merge your PR."
-        + " If you do not have write access to the repository you can ask `".concat(inputs.maintainers, "` to re-run it for you.")
-        + " If you push a new commit, all of CI will re-trigger ⚠️**"
-        + " If you have any other questions, you can reach out to `".concat(inputs.owner, "` for help."));
+    var failedMesage = ("> **Warning**\n> This job will need to be re-run to merge your PR."
+        + " If you do not have write access to the repository, you can ask `".concat(inputs.maintainers, "` to re-run it.")
+        + " If you push a new commit, all of CI will re-trigger.\n\n");
     var progressDetails = (0, exports.generateProgressDetailsMarkdown)(subprojects, postedChecks);
     return (PR_COMMENT_START
-        + "\n# ".concat(lightning, " Required checks status: ").concat(parsedConclusion, " ").concat(conclusionEmoji)
+        + "\n# ".concat(lightning, " Required checks status: ").concat(parsedConclusion, " ").concat(conclusionEmoji, "\n\n")
         + ((hasFailed) ? failedMesage : "")
-        + ((subprojects.length) ? "\n".concat(progressDetails) : "\nNo groups match the files changed in this PR.")
-        + "\n\n---"
-        + "\nThis comment was automatically generated and updates for ".concat(inputs.timeout, " minutes ")
-        + "every ".concat(inputs.interval, " seconds.")
-        + "\n\nThank you for your contribution! 💜");
+        + ((subprojects.length) ? progressDetails : "No groups match the files changed in this PR.\n\n")
+        + "---\n\n"
+        + "Thank you for your contribution! 💜\n\n"
+        + "> **Note**\n> This comment is automatically generated and updates for ".concat(inputs.timeout, " minutes every ").concat(inputs.interval, " seconds.")
+        + " If you have any other questions, contact `".concat(inputs.owner, "` for help.\n"));
 }
 function getPrComment(context) {
     return __awaiter(this, void 0, void 0, function () {

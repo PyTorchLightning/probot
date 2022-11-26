@@ -110,6 +110,7 @@ export const generateProgressDetailsMarkdown = (
       const mark = statusToMark(check, postedChecks);
       progress += `| ${link} | ${status} | ${mark} |\n`;
     })
+    progress += `\nThese checks are required after the changes to \`${subproject.paths.join("`, `")}\`.\n`
     progress += "\n</details>\n\n";
   });
   return progress;
@@ -130,21 +131,20 @@ function formPrComment(
   const conclusionEmoji = (result === "all_passing") ? "🟢": (hasFailed) ? "🔴" : "🟡"
   const lightning = (result === "all_passing") ? "⚡": (hasFailed) ? "⛈️" : "🌩️"
   const failedMesage = (
-    `\n**⚠️ This job will need to be re-run to merge your PR.`
-    + ` If you do not have write access to the repository you can ask \`${inputs.maintainers}\` to re-run it for you.`
-    + " If you push a new commit, all of CI will re-trigger ⚠️**"
-    + ` If you have any other questions, you can reach out to \`${inputs.owner}\` for help.`
+    `> **Warning**\n> This job will need to be re-run to merge your PR.`
+    + ` If you do not have write access to the repository, you can ask \`${inputs.maintainers}\` to re-run it.`
+    + " If you push a new commit, all of CI will re-trigger.\n\n"
   )
   const progressDetails = generateProgressDetailsMarkdown(subprojects, postedChecks)
   return (
     PR_COMMENT_START
-    + `\n# ${lightning} Required checks status: ${parsedConclusion} ${conclusionEmoji}`
+    + `\n# ${lightning} Required checks status: ${parsedConclusion} ${conclusionEmoji}\n\n`
     + ((hasFailed) ? failedMesage : "")
-    + ((subprojects.length) ? `\n${progressDetails}` : "\nNo groups match the files changed in this PR.")
-    + "\n\n---"
-    + `\nThis comment was automatically generated and updates for ${inputs.timeout} minutes `
-    + `every ${inputs.interval} seconds.`
-    + "\n\nThank you for your contribution! 💜"
+    + ((subprojects.length) ? progressDetails : "No groups match the files changed in this PR.\n\n")
+    + "---\n\n"
+    + "Thank you for your contribution! 💜\n\n"
+    + `> **Note**\n> This comment is automatically generated and updates for ${inputs.timeout} minutes every ${inputs.interval} seconds.`
+    + ` If you have any other questions, contact \`${inputs.owner}\` for help.\n`
   )
 }
 
