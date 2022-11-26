@@ -89,7 +89,7 @@ export const generateProgressDetailsMarkdown = (
   subprojects: SubProjConfig[],
   postedChecks: Record<string, CheckRunData>,
 ): string => {
-  let progress = "## Groups summary\n";
+  let progress = "## Groups summary\n\n";
   subprojects.forEach((subproject) => {
     // get the aggregated status of all statuses in the subproject
     const checkResult = getChecksResult(subproject.checks, postedChecks)
@@ -144,7 +144,7 @@ function formPrComment(
     + "---\n\n"
     + "Thank you for your contribution! 💜\n\n"
     + `> **Note**\n> This comment is automatically generated and updates for ${inputs.timeout} minutes every ${inputs.interval} seconds.`
-    + ` If you have any other questions, contact \`${inputs.owner}\` for help.\n`
+    + ` If you have any other questions, contact \`${inputs.owner}\` for help.`
   )
 }
 

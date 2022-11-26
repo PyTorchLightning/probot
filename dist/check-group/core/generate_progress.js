@@ -105,7 +105,7 @@ var generateProgressDetailsCLI = function (subprojects, postedChecks) {
 };
 exports.generateProgressDetailsCLI = generateProgressDetailsCLI;
 var generateProgressDetailsMarkdown = function (subprojects, postedChecks) {
-    var progress = "## Groups summary\n";
+    var progress = "## Groups summary\n\n";
     subprojects.forEach(function (subproject) {
         // get the aggregated status of all statuses in the subproject
         var checkResult = (0, satisfy_expected_checks_1.getChecksResult)(subproject.checks, postedChecks);
@@ -152,7 +152,7 @@ function formPrComment(result, inputs, subprojects, postedChecks) {
         + "---\n\n"
         + "Thank you for your contribution! 💜\n\n"
         + "> **Note**\n> This comment is automatically generated and updates for ".concat(inputs.timeout, " minutes every ").concat(inputs.interval, " seconds.")
-        + " If you have any other questions, contact `".concat(inputs.owner, "` for help.\n"));
+        + " If you have any other questions, contact `".concat(inputs.owner, "` for help."));
 }
 function getPrComment(context) {
     return __awaiter(this, void 0, void 0, function () {
