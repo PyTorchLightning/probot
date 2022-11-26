@@ -117,6 +117,9 @@ export class CheckGroup {
     try {
       commentOnPr(this.context, result, this.inputs, subprojs, postedChecks)
     } catch (e) {
+      core.info((e instanceof RequestError).toString())
+      core.info((e.status === 403).toString())
+      core.info(typeof e)
       if (e instanceof RequestError && e.status === 403) {
         // Forbidden: Resource not accessible by integration
         core.info(`Failed to comment on the PR: ${JSON.stringify(e)}`)

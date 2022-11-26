@@ -171,6 +171,9 @@ var CheckGroup = /** @class */ (function () {
                     (0, generate_progress_1.commentOnPr)(this.context, result, this.inputs, subprojs, postedChecks);
                 }
                 catch (e) {
+                    core.info((e instanceof request_error_1.RequestError).toString());
+                    core.info((e.status === 403).toString());
+                    core.info(typeof e);
                     if (e instanceof request_error_1.RequestError && e.status === 403) {
                         // Forbidden: Resource not accessible by integration
                         core.info("Failed to comment on the PR: ".concat(JSON.stringify(e)));
