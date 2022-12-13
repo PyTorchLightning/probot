@@ -78,6 +78,7 @@ var CheckGroup = /** @class */ (function () {
         this.intervalTimer = setTimeout(function () { return ''; }, 0);
         this.timeoutTimer = setTimeout(function () { return ''; }, 0);
         this.inputs = {};
+        this.canComment = true;
         this.pullRequestNumber = pullRequestNumber;
         this.config = config;
         this.context = context;
@@ -180,7 +181,11 @@ var CheckGroup = /** @class */ (function () {
                         e_1 = _a.sent();
                         if (e_1 instanceof request_error_1.RequestError && e_1.status === 403) {
                             // Forbidden: Resource not accessible by integration
-                            core.info("Failed to comment on the PR: ".concat(JSON.stringify(e_1)));
+                            if (this.canComment) {
+                                core.info("Failed to comment on the PR: ".concat(JSON.stringify(e_1)));
+                            }
+                            // Use this boolean to only print the info message once
+                            this.canComment = false;
                         }
                         else {
                             throw e_1;
@@ -223,7 +228,9 @@ var getPostedChecks = function (context, sha) { return __awaiter(void 0, void 0,
     var checkRuns, checkNames;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, context.octokit.paginate(context.octokit.checks.listForRef, context.repo({ ref: sha }), function (response) { return response.data; })];
+            case 0: return [4 /*yield*/, context.octokit.paginate(context.octokit.checks.listForRef, 
+                // only the latest runs, in case it was run multiple times
+                context.repo({ ref: sha, filter: "latest" }), function (response) { return response.data; })];
             case 1:
                 checkRuns = _a.sent();
                 core.debug("checkRuns: ".concat(JSON.stringify(checkRuns)));

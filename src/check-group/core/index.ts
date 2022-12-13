@@ -27,6 +27,8 @@ export class CheckGroup {
   timeoutTimer: ReturnType<typeof setTimeout> = setTimeout(() => '', 0);
   inputs: Record<string, any> = {};
 
+  canComment: boolean = true;
+
   constructor(
     pullRequestNumber: number,
     config: CheckGroupConfig,
@@ -119,7 +121,11 @@ export class CheckGroup {
     } catch (e) {
       if (e instanceof RequestError && e.status === 403) {
         // Forbidden: Resource not accessible by integration
-        core.info(`Failed to comment on the PR: ${JSON.stringify(e)}`)
+        if (this.canComment) {
+          core.info(`Failed to comment on the PR: ${JSON.stringify(e)}`)
+        }
+        // Use this boolean to only print the info message once
+        this.canComment = false
       } else {
         throw e
       }
@@ -154,7 +160,8 @@ export {fetchConfig};
 const getPostedChecks = async (context: Context, sha: string): Promise<Record<string, CheckRunData>> => {
   const checkRuns = await context.octokit.paginate(
     context.octokit.checks.listForRef,
-    context.repo({ref: sha}),
+    // only the latest runs, in case it was run multiple times
+    context.repo({ref: sha, filter: "latest"}),
     (response) => response.data,
   );
   core.debug(`checkRuns: ${JSON.stringify(checkRuns)}`)
