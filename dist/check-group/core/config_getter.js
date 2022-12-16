@@ -80,12 +80,11 @@ var core = __importStar(require("@actions/core"));
  * @returns The configuration or default configuration if non exists.
  */
 var fetchConfig = function (context) { return __awaiter(void 0, void 0, void 0, function () {
-    var configData, filename, payload, repoFullName, githubRepository, prBranch, params, config;
+    var configData, payload, repoFullName, githubRepository, prBranch, baseBranch;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 configData = undefined;
-                filename = "checkgroup.yml";
                 payload = context.payload;
                 repoFullName = payload.pull_request.head.repo.full_name;
                 githubRepository = payload.pull_request.base.repo.full_name;
@@ -93,15 +92,15 @@ var fetchConfig = function (context) { return __awaiter(void 0, void 0, void 0, 
                 if (!(repoFullName == githubRepository)) return [3 /*break*/, 2];
                 prBranch = payload.pull_request.head.ref;
                 core.info("The PR is from a branch in the repository. Reading the config in ".concat(prBranch));
-                params = context.repo({ path: ".github/".concat(filename) });
-                return [4 /*yield*/, context.octokit.config.get(__assign(__assign({}, params), { branch: prBranch }))];
+                return [4 /*yield*/, readConfig(context, prBranch)];
             case 1:
-                config = (_a.sent()).config;
-                configData = config;
+                configData = _a.sent();
                 return [3 /*break*/, 4];
-            case 2: return [4 /*yield*/, context.config(filename)];
+            case 2:
+                baseBranch = payload.pull_request.base.ref;
+                core.info("The PR is from a fork (".concat(repoFullName, "). For security, reading the config in ").concat(baseBranch));
+                return [4 /*yield*/, readConfig(context, baseBranch)];
             case 3:
-                // this will pull the config from master
                 configData = _a.sent();
                 _a.label = 4;
             case 4:
@@ -111,3 +110,16 @@ var fetchConfig = function (context) { return __awaiter(void 0, void 0, void 0, 
     });
 }); };
 exports.fetchConfig = fetchConfig;
+var readConfig = function (context, branch) { return __awaiter(void 0, void 0, void 0, function () {
+    var params, config;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                params = context.repo({ path: '.github/checkgroup.yml' });
+                return [4 /*yield*/, context.octokit.config.get(__assign(__assign({}, params), { branch: branch }))];
+            case 1:
+                config = (_a.sent()).config;
+                return [2 /*return*/, config];
+        }
+    });
+}); };
