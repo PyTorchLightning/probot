@@ -18,11 +18,11 @@ export const fetchConfig = async (context: Context): Promise<CheckGroupConfig> =
   core.debug(`fetchConfig ${repoFullName} ${githubRepository}`)
   if (repoFullName == githubRepository) {
     const prBranch = payload.pull_request.head.ref;
-    core.info(`The PR is from a branch in the repository. Reading the config in ${prBranch}`)
+    core.info(`The PR is from a branch in the repository. Reading the config in '${prBranch}'`)
     configData = await readConfig(context, prBranch)
   } else {
     const baseBranch = payload.pull_request.base.ref;
-    core.info(`The PR is from a fork (${repoFullName}). For security, reading the config in ${baseBranch}`)
+    core.info(`The PR is from a fork: '${repoFullName}'. For security, reading the config in '${baseBranch}'`)
     configData = await readConfig(context, baseBranch)
   }
   core.debug(`configData: ${JSON.stringify(configData)}`)
