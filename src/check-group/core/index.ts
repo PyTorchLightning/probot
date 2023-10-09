@@ -175,9 +175,14 @@ const getPostedChecks = async (context: Context, sha: string): Promise<Record<st
         details_url: checkRun.details_url,
         completed_at: new Date(checkRun.completed_at),
       }
-      // "filter: latest" doesnt seem to work as expected so we need to check the completed_at in case of collisions
-      if (!checkNames[checkRun.name] || checkNames[checkRun.name].completed_at < checkRunData.completed_at) {
+      if (!checkNames[checkRun.name]) {
         checkNames[checkRun.name] = checkRunData;
+      } else {
+        core.debug(`Conflict for ${checkRun.name}: previous=${checkNames[checkRun.name].completed_at}, new=${checkRunData.completed_at}`)
+        // "filter: latest" doesnt seem to work as expected so we need to check `completed_at` in case of collisions
+        if (checkNames[checkRun.name].completed_at < checkRunData.completed_at) {
+          checkNames[checkRun.name] = checkRunData;
+        }
       }
     },
   );

@@ -243,9 +243,15 @@ var getPostedChecks = function (context, sha) { return __awaiter(void 0, void 0,
                         details_url: checkRun.details_url,
                         completed_at: new Date(checkRun.completed_at),
                     };
-                    // "filter: latest" doesnt seem to work as expected so we need to check the completed_at in case of collisions
-                    if (!checkNames[checkRun.name] || checkNames[checkRun.name].completed_at < checkRunData.completed_at) {
+                    if (!checkNames[checkRun.name]) {
                         checkNames[checkRun.name] = checkRunData;
+                    }
+                    else {
+                        core.debug("Conflict for ".concat(checkRun.name, ": previous=").concat(checkNames[checkRun.name].completed_at, ", new=").concat(checkRunData.completed_at));
+                        // "filter: latest" doesnt seem to work as expected so we need to check `completed_at` in case of collisions
+                        if (checkNames[checkRun.name].completed_at < checkRunData.completed_at) {
+                            checkNames[checkRun.name] = checkRunData;
+                        }
                     }
                 });
                 return [2 /*return*/, checkNames];
