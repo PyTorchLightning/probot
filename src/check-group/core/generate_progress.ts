@@ -78,6 +78,7 @@ export const generateProgressDetailsCLI = (
   for (const availableCheck in postedChecks) {
     longestLength = Math.max(longestLength, availableCheck.length);
   }
+  postedChecks.sort((a, b) => a.localeCompare(b))
   for (const availableCheck in postedChecks) {
     const mark = statusToMark(availableCheck, postedChecks);
     const status = parseStatus(availableCheck, postedChecks);
