@@ -31,7 +31,9 @@ const statusToLink = (
   if (check in postedChecks) {
     const checkData = postedChecks[check]
     // assert(checkData.name === check)
-    return `[${check}](${checkData.details_url})`
+    // if the check name contains the character "|", it will break the table rendering
+    const sanitizedCheck = check.replace(/\|/g, "\\|")
+    return `[${sanitizedCheck}](${checkData.details_url})`
   }
   return check
 }

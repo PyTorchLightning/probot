@@ -48,4 +48,5 @@ export interface CheckRunData {
   status: Status;
   conclusion: Conclusion;
   details_url: string;
+  completed_at: Date,
 }

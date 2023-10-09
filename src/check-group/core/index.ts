@@ -172,9 +172,13 @@ const getPostedChecks = async (context: Context, sha: string): Promise<Record<st
         name: checkRun.name,
         status: checkRun.status,
         conclusion: checkRun.conclusion,
-        details_url: checkRun.details_url
+        details_url: checkRun.details_url,
+        completed_at: new Date(checkRun.completed_at),
       }
-      checkNames[checkRun.name] = checkRunData;
+      // "filter: latest" doesnt seem to work as expected so we need to check the completed_at in case of collisions
+      if (!checkNames[checkRun.name] || checkNames[checkRun.name].completed_at < checkRunData.completed_at) {
+        checkNames[checkRun.name] = checkRunData;
+      }
     },
   );
   return checkNames;
