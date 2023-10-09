@@ -59,7 +59,9 @@ var statusToLink = function (check, postedChecks) {
     if (check in postedChecks) {
         var checkData = postedChecks[check];
         // assert(checkData.name === check)
-        return "[".concat(check, "](").concat(checkData.details_url, ")");
+        // if the check name contains the character "|", it will break the table rendering
+        var sanitizedCheck = check.replace(/\|/g, "\\|");
+        return "[".concat(sanitizedCheck, "](").concat(checkData.details_url, ")");
     }
     return check;
 };
